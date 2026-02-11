@@ -138,10 +138,14 @@ final class CAGridView: NSView, CALayerDelegate {
     var scrollEventMonitor: Any?
     var wasWindowVisible = false  // 跟踪窗口可见状态
     
-    // 鼠标滚轮跟手效果
+    // 鼠标滚轮分页状态（仅用于非精准滚动设备）
     var wheelAccumulatedDelta: CGFloat = 0
-    var wheelSnapTimer: Timer?
-    let wheelSnapDelay: TimeInterval = 0.15  // 停止滚动后多久触发 snap
+    var wheelLastDirection: Int = 0
+    var wheelLastFlipAt: Date?
+    let wheelFlipCooldown: TimeInterval = 0.15
+    // Legacy reference:
+    // var wheelSnapTimer: Timer?
+    // let wheelSnapDelay: TimeInterval = 0.15  // 停止滚动后多久触发 snap
     let debugScrollMismatch = false
     var externalDragActive = false
     var hoveredIndex: Int?

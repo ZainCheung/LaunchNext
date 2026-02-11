@@ -87,17 +87,18 @@ extension CAGridView {
         let isPrecise = event.hasPreciseScrollingDeltas
 
         if !isPrecise {
-            // 鼠标滚轮 - 跟手效果 + 弹回动画
+            /*
+            // 旧版滚轮跟手 + 定时器 snap 逻辑（保留注释，便于后续对比）
             wheelSnapTimer?.invalidate()
-            
+
             // 累积滚动量
             wheelAccumulatedDelta += scaledDelta * 8  // 放大系数，让跟手效果更明显
-            
+
             // 计算临时偏移（带橡皮筋效果）
             let pageStride = bounds.width + pageSpacing
             let baseOffset = -CGFloat(currentPage) * pageStride
             var newOffset = baseOffset + wheelAccumulatedDelta
-            
+
             // 橡皮筋效果：边界阻力
             let minOffset = -CGFloat(pageCount - 1) * pageStride
             let maxOffset: CGFloat = 0
@@ -108,30 +109,34 @@ extension CAGridView {
                 let overscroll = newOffset - minOffset
                 newOffset = minOffset + rubberBand(overscroll, limit: bounds.width * 0.15)
             }
-            
+
             // 更新显示
             scrollOffset = newOffset
             CATransaction.begin()
             CATransaction.setDisableActions(true)
             pageContainerLayer.transform = CATransform3DMakeTranslation(scrollOffset, 0, 0)
             CATransaction.commit()
-            
+
             // 设置定时器，停止滚动后决定翻页或弹回
             wheelSnapTimer = Timer.scheduledTimer(withTimeInterval: wheelSnapDelay, repeats: false) { [weak self] _ in
                 guard let self = self else { return }
-                
+
                 let threshold = self.bounds.width * 0.15  // 15% 触发翻页
                 var targetPage = self.currentPage
-                
+
                 if self.wheelAccumulatedDelta < -threshold {
                     targetPage = self.currentPage + 1
                 } else if self.wheelAccumulatedDelta > threshold {
                     targetPage = self.currentPage - 1
                 }
-                
+
                 self.wheelAccumulatedDelta = 0
                 self.navigateToPage(targetPage, animated: true)
             }
+            */
+
+            // 只优化普通滚轮，不改精准设备（触控板 / Magic Mouse）路径
+            handleWheelPaging(with: scaledDelta)
             return
         }
 
@@ -195,6 +200,32 @@ extension CAGridView {
         default:
             break
         }
+    }
+
+    private func handleWheelPaging(with scaledDelta: CGFloat) {
+        guard scaledDelta != 0 else { return }
+
+        let direction = scaledDelta > 0 ? 1 : -1
+        if wheelLastDirection != direction {
+            wheelAccumulatedDelta = 0
+        }
+        wheelLastDirection = direction
+        wheelAccumulatedDelta += abs(scaledDelta)
+
+        // 固定阈值，灵敏度变化已反映在 scaledDelta
+        let threshold: CGFloat = 2.0
+        guard wheelAccumulatedDelta >= threshold else { return }
+
+        let now = Date()
+        if let last = wheelLastFlipAt, now.timeIntervalSince(last) < wheelFlipCooldown {
+            return
+        }
+
+        // 维持现有方向语义：正向输入翻到上一页，负向输入翻到下一页
+        let targetPage = direction > 0 ? currentPage - 1 : currentPage + 1
+        wheelLastFlipAt = now
+        wheelAccumulatedDelta = 0
+        navigateToPage(targetPage, animated: true)
     }
 
     func rubberBand(_ offset: CGFloat, limit: CGFloat) -> CGFloat {
@@ -986,8 +1017,8 @@ extension CAGridView {
         isDragging = false
         accumulatedDelta = 0
         wheelAccumulatedDelta = 0
-        wheelSnapTimer?.invalidate()
-        wheelSnapTimer = nil
+        wheelLastDirection = 0
+        wheelLastFlipAt = nil
     }
 
     /// 计算点击位置对应的网格位置（即使是空白区域）
