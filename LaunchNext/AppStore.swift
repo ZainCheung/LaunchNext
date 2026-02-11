@@ -210,6 +210,7 @@ final class AppStore: ObservableObject {
     static let backgroundMaskDarkKey = "launchpadBackgroundMaskDark"
     static let folderPreviewHighResKey = "folderPreviewHighRes"
     static let sidebarIconPresetKey = "sidebarIconPreset"
+    static let uninstallToolAppPathKey = "uninstallToolAppPath"
     static let pageIndicatorPerDisplayEnabledKey = "pageIndicatorPerDisplayEnabled"
     static let pageIndicatorPerDisplayOverridesKey = "pageIndicatorPerDisplayOverrides"
     private static let gameControllerEnabledKey = "gameControllerEnabled"
@@ -479,6 +480,7 @@ final class AppStore: ObservableObject {
            let preset = SidebarIconPreset(rawValue: raw) {
             sidebarIconPreset = preset
         }
+        uninstallToolAppPath = UserDefaults.standard.string(forKey: AppStore.uninstallToolAppPathKey) ?? ""
 
         launchpadBackgroundStyle = AppStore.loadBackgroundStyle()
         backgroundMaskEnabled = AppStore.loadBackgroundMaskEnabled()
@@ -856,6 +858,20 @@ final class AppStore: ObservableObject {
         didSet {
             guard showQuickRefreshButton != oldValue else { return }
             UserDefaults.standard.set(showQuickRefreshButton, forKey: AppStore.showQuickRefreshButtonKey)
+        }
+    }
+
+    @Published var uninstallToolAppPath: String = {
+        UserDefaults.standard.string(forKey: AppStore.uninstallToolAppPathKey) ?? ""
+    }() {
+        didSet {
+            guard uninstallToolAppPath != oldValue else { return }
+            let trimmed = uninstallToolAppPath.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed.isEmpty {
+                UserDefaults.standard.removeObject(forKey: AppStore.uninstallToolAppPathKey)
+            } else {
+                UserDefaults.standard.set(trimmed, forKey: AppStore.uninstallToolAppPathKey)
+            }
         }
     }
 
@@ -4075,6 +4091,11 @@ final class AppStore: ObservableObject {
         if let existing = apps.first(where: { $0.url.path == path }) {
             return existing
         }
+        for folder in folders {
+            if let existing = folder.apps.first(where: { $0.url.path == path }) {
+                return existing
+            }
+        }
 
         let url = URL(fileURLWithPath: path)
         if FileManager.default.fileExists(atPath: url.path) {
@@ -4099,6 +4120,90 @@ final class AppStore: ObservableObject {
             return url.deletingPathExtension().lastPathComponent
         }
         return AppInfo.from(url: url, customTitle: nil, loadIcon: PerformanceMode.current == .full).name
+    }
+
+    var uninstallToolAppURL: URL? {
+        let trimmed = uninstallToolAppPath.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        let resolved = URL(fileURLWithPath: trimmed).resolvingSymlinksInPath()
+        var isDir: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: resolved.path, isDirectory: &isDir), isDir.boolValue else { return nil }
+        guard resolved.pathExtension.caseInsensitiveCompare("app") == .orderedSame else { return nil }
+        return resolved
+    }
+
+    var uninstallToolAppDisplayName: String {
+        guard let url = uninstallToolAppURL else { return "" }
+        return AppInfo.from(url: url, loadIcon: false).name
+    }
+
+    var uninstallToolBundleIdentifier: String {
+        guard let url = uninstallToolAppURL else { return "" }
+        return Bundle(url: url)?.bundleIdentifier ?? ""
+    }
+
+    var uninstallToolVersionText: String {
+        guard let url = uninstallToolAppURL,
+              let info = Bundle(url: url)?.infoDictionary else { return "" }
+
+        let shortVersion = (info["CFBundleShortVersionString"] as? String)?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let buildVersion = (info["CFBundleVersion"] as? String)?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+
+        if !shortVersion.isEmpty && !buildVersion.isEmpty && shortVersion != buildVersion {
+            return "\(shortVersion) (\(buildVersion))"
+        }
+        if !shortVersion.isEmpty { return shortVersion }
+        return buildVersion
+    }
+
+    var uninstallToolAppIcon: NSImage {
+        let icon: NSImage
+        if let url = uninstallToolAppURL {
+            icon = NSWorkspace.shared.icon(forFile: url.path)
+        } else {
+            icon = NSWorkspace.shared.icon(forFileType: "app")
+        }
+        let rendered = (icon.copy() as? NSImage) ?? icon
+        rendered.size = NSSize(width: 64, height: 64)
+        return rendered
+    }
+
+    var uninstallToolConfiguredButMissing: Bool {
+        let trimmed = uninstallToolAppPath.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !trimmed.isEmpty && uninstallToolAppURL == nil
+    }
+
+    @discardableResult
+    func setUninstallToolApplication(url: URL?) -> Bool {
+        guard let url else {
+            uninstallToolAppPath = ""
+            return true
+        }
+
+        let resolved = url.resolvingSymlinksInPath()
+        var isDir: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: resolved.path, isDirectory: &isDir), isDir.boolValue else { return false }
+        guard resolved.pathExtension.caseInsensitiveCompare("app") == .orderedSame else { return false }
+        uninstallToolAppPath = resolved.path
+        return true
+    }
+
+    @discardableResult
+    func openConfiguredUninstallTool() -> Bool {
+        guard let helper = uninstallToolAppURL else { return false }
+        return NSWorkspace.shared.open(helper)
+    }
+
+    @discardableResult
+    func openConfiguredUninstallTool(for app: AppInfo) -> Bool {
+        guard let helper = uninstallToolAppURL else { return false }
+        let target = app.url.resolvingSymlinksInPath()
+        guard FileManager.default.fileExists(atPath: target.path) else { return false }
+        let configuration = NSWorkspace.OpenConfiguration()
+        NSWorkspace.shared.open([target], withApplicationAt: helper, configuration: configuration) { _, _ in }
+        return true
     }
 
     @discardableResult

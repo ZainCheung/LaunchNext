@@ -100,10 +100,16 @@ final class CAGridView: NSView, CALayerDelegate {
     var onPageChanged: ((Int) -> Void)?
     var onFPSUpdate: ((Double) -> Void)?
     var onEmptyAreaClicked: (() -> Void)?
+    var onHideApp: ((AppInfo) -> Void)?
+    var onUninstallWithTool: ((AppInfo) -> Void)?
     var onCreateFolder: ((AppInfo, AppInfo, Int) -> Void)?  // (拖拽的app, 目标app, 位置)
     var onMoveToFolder: ((AppInfo, FolderInfo) -> Void)?    // 移动到已有文件夹
     var onReorderItems: ((Int, Int) -> Void)?               // 重新排序 (fromIndex, toIndex)
     var onRequestNewPage: (() -> Void)?                     // 请求创建新页面
+    var hideAppMenuTitle: String = "Hide application"
+    var uninstallWithToolMenuTitle: String = "Uninstall with configured tool"
+    var canUseConfiguredUninstallTool: Bool = false
+    var contextMenuTargetApp: AppInfo?
 
     // 拖拽状态
     var isDraggingItem = false

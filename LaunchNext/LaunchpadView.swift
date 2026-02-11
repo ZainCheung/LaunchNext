@@ -1691,26 +1691,24 @@ extension LaunchpadView {
             }()
 
             let base = LaunchpadItemButton(
-                item: item,
-                iconSize: iconSize,
-                labelWidth: labelWidth,
-                isSelected: isSelected,
-                showLabel: appStore.showLabels,
-                labelFontSize: CGFloat(appStore.iconLabelFontSize),
-                labelFontWeight: appStore.iconLabelFontWeightValue,
-                shouldAllowHover: shouldAllowHover,
-                externalScale: isCenterCreatingTarget ? 1.2 : nil,
-                hoverMagnificationEnabled: appStore.enableHoverMagnification,
-                hoverMagnificationScale: CGFloat(appStore.hoverMagnificationScale),
-                activePressEffectEnabled: appStore.enableActivePressEffect,
-                activePressScale: CGFloat(appStore.activePressScale),
-                onTap: { if draggingItem == nil { handleItemTap(item) } }
-            )
-            .frame(height: appHeight)
-            // 保持稳定的视图身份，避免在文件夹更新后中断拖拽手势
-            .id(item.id)
-
-
+                    item: item,
+                    iconSize: iconSize,
+                    labelWidth: labelWidth,
+                    isSelected: isSelected,
+                    showLabel: appStore.showLabels,
+                    labelFontSize: CGFloat(appStore.iconLabelFontSize),
+                    labelFontWeight: appStore.iconLabelFontWeightValue,
+                    shouldAllowHover: shouldAllowHover,
+                    externalScale: isCenterCreatingTarget ? 1.2 : nil,
+                    hoverMagnificationEnabled: appStore.enableHoverMagnification,
+                    hoverMagnificationScale: CGFloat(appStore.hoverMagnificationScale),
+                    activePressEffectEnabled: appStore.enableActivePressEffect,
+                    activePressScale: CGFloat(appStore.activePressScale),
+                    onTap: { if draggingItem == nil { handleItemTap(item) } }
+                )
+                .frame(height: appHeight)
+                // 保持稳定的视图身份，避免在文件夹更新后中断拖拽手势
+                .id(item.id)
             if appStore.searchText.isEmpty && !isFolderOpen && !appStore.isLayoutLocked {
                 let isDraggingThisTile = (draggingItem == item)
 
@@ -1740,11 +1738,14 @@ extension LaunchpadView {
                                 }
                             }
                     )
+                    .launchNextHideAppContextMenu(app: item.contextMenuApp, appStore: appStore)
             } else {
                 base
+                    .launchNextHideAppContextMenu(app: item.contextMenuApp, appStore: appStore)
             }
         }
     }
+
 }
 
 // MARK: - Drag math helpers

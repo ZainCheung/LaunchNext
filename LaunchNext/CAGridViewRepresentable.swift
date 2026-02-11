@@ -48,6 +48,9 @@ struct CAGridViewRepresentable: NSViewRepresentable {
         view.activePressScale = CGFloat(appStore.activePressScale)
         view.animationsEnabled = appStore.enableAnimations
         view.animationDuration = appStore.animationDuration
+        view.hideAppMenuTitle = appStore.localized(.hiddenAppsAddButton)
+        view.uninstallWithToolMenuTitle = appStore.localized(.contextMenuUninstallWithConfiguredTool)
+        view.canUseConfiguredUninstallTool = appStore.uninstallToolAppURL != nil
         
         // Set current page BEFORE items to ensure correct initial position
         view.setInitialPage(appStore.currentPage)
@@ -93,6 +96,19 @@ struct CAGridViewRepresentable: NSViewRepresentable {
         view.onEmptyAreaClicked = {
             // 点击空白区域关闭窗口
             AppDelegate.shared?.hideWindow()
+        }
+
+        view.onHideApp = { app in
+            DispatchQueue.main.async {
+                _ = appStore.hideApp(app)
+            }
+        }
+        view.onUninstallWithTool = { app in
+            DispatchQueue.main.async {
+                if !appStore.openConfiguredUninstallTool(for: app) {
+                    NSSound.beep()
+                }
+            }
         }
 
         // 拖拽创建文件夹
@@ -211,6 +227,9 @@ struct CAGridViewRepresentable: NSViewRepresentable {
         nsView.animationsEnabled = appStore.enableAnimations
         nsView.animationDuration = appStore.animationDuration
         nsView.isScrollEnabled = appStore.openFolder == nil && !appStore.isSetting
+        nsView.hideAppMenuTitle = appStore.localized(.hiddenAppsAddButton)
+        nsView.uninstallWithToolMenuTitle = appStore.localized(.contextMenuUninstallWithConfiguredTool)
+        nsView.canUseConfiguredUninstallTool = appStore.uninstallToolAppURL != nil
 
         // 检查刷新触发器是否变化（文件夹创建/修改会触发）
         let triggerChanged = context.coordinator.lastGridRefreshTrigger != gridRefreshTrigger ||

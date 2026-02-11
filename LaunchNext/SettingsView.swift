@@ -106,7 +106,7 @@ struct SettingsView: View {
                                 .foregroundStyle(.secondary)
                         }
                     }
-                    .padding(.bottom, 17)
+                    .padding(.bottom, 10)
                     .listRowInsets(EdgeInsets(top: 0, leading: -4, bottom: 15, trailing: 10))
                     .listRowSeparator(.hidden)
                     .listRowBackground(Color.clear)
@@ -244,6 +244,7 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
     case titles
     case appSources
     case hiddenApps
+    case uninstall
     case shortcuts
     case backup
     case development
@@ -266,6 +267,7 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
         case .performance: return "speedometer"
         case .titles: return "text.badge.plus"
         case .hiddenApps: return "eye.slash"
+        case .uninstall: return "trash"
         case .backup: return "clock.arrow.trianglehead.counterclockwise.rotate.90"
         case .development: return "hammer"
         // case .aiOverlay: return "sparkles"
@@ -295,6 +297,8 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
             colors = [Color(red: 0.95, green: 0.37, blue: 0.32), Color(red: 0.98, green: 0.55, blue: 0.44)]
         case .hiddenApps:
             colors = [Color(red: 0.29, green: 0.39, blue: 0.96), Color(red: 0.11, green: 0.67, blue: 0.91)]
+        case .uninstall:
+            colors = [Color(red: 0.94, green: 0.22, blue: 0.27), Color(red: 0.78, green: 0.04, blue: 0.18)]
         case .backup:
             colors = [Color(red: 0.12, green: 0.80, blue: 0.46), Color(red: 0.10, green: 0.62, blue: 0.34)]
         case .development:
@@ -320,6 +324,7 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
         case .performance: return .settingsSectionPerformance
         case .titles: return .settingsSectionTitles
         case .hiddenApps: return .settingsSectionHiddenApps
+        case .uninstall: return .settingsSectionUninstall
         case .backup: return .settingsSectionBackup
         case .development: return .settingsSectionDevelopment
         // case .aiOverlay: return .settingsSectionAIOverlay
@@ -384,6 +389,8 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
             appSourcesSection
         case .hiddenApps:
             hiddenAppsSection
+        case .uninstall:
+            uninstallSection
         case .shortcuts:
             shortcutsSection
         case .backup:
@@ -1191,6 +1198,8 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
             }
         }
         .onChange(of: appStore.apps, initial: false, updateCachedHiddenAndNotHiddenAppEntries)
+        .onChange(of: appStore.folders, initial: false, updateCachedHiddenAndNotHiddenAppEntries)
+        .onChange(of: appStore.hiddenAppPaths, initial: false, updateCachedHiddenAndNotHiddenAppEntries)
     }
 
     private var hiddenAppEntries: [AppEntry] {
@@ -1206,7 +1215,7 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
     }
     
     private var notHiddenAppEntries: [AppEntry] {
-        appStore.apps
+        visibleNonHiddenApps
             .map { info in
                 let path = info.url.path
                 let defaultName = appStore.defaultDisplayName(for: path)
@@ -1215,6 +1224,22 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
             .sorted { lhs, rhs in
                 lhs.appInfo.name.localizedCaseInsensitiveCompare(rhs.appInfo.name) == .orderedAscending
             }
+    }
+
+    private var visibleNonHiddenApps: [AppInfo] {
+        var dedupedByPath: [String: AppInfo] = [:]
+        for app in appStore.apps {
+            dedupedByPath[standardizePath(app.url.path)] = app
+        }
+        for folder in appStore.folders {
+            for app in folder.apps {
+                let key = standardizePath(app.url.path)
+                if dedupedByPath[key] == nil {
+                    dedupedByPath[key] = app
+                }
+            }
+        }
+        return Array(dedupedByPath.values)
     }
     
     private func matches(_ entry: AppEntry, query: String) -> Bool {
@@ -1368,6 +1393,128 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
             }
         }
     }
+
+    private var uninstallSection: some View {
+        let rawPath = appStore.uninstallToolAppPath.trimmingCharacters(in: .whitespacesAndNewlines)
+        let toolURL = appStore.uninstallToolAppURL
+        let hasSelection = !rawPath.isEmpty
+        let fallbackName = rawPath.isEmpty ? "" : URL(fileURLWithPath: rawPath).deletingPathExtension().lastPathComponent
+        let displayName = toolURL == nil ? fallbackName : appStore.uninstallToolAppDisplayName
+
+        return VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 12) {
+                Text(appStore.localized(.uninstallToolPathLabel))
+                    .font(.subheadline.weight(.semibold))
+
+                HStack(alignment: .top, spacing: 10) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color.red.opacity(0.14), Color.orange.opacity(0.10)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+
+                        Image(nsImage: appStore.uninstallToolAppIcon)
+                            .resizable()
+                            .interpolation(.high)
+                            .antialiased(true)
+                            .frame(width: 30, height: 30)
+                            .cornerRadius(7)
+                    }
+                    .frame(width: 42, height: 42)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        if hasSelection {
+                            Text(displayName.isEmpty ? rawPath : displayName)
+                                .font(.headline)
+                                .lineLimit(1)
+
+                            if !appStore.uninstallToolBundleIdentifier.isEmpty {
+                                Label(appStore.uninstallToolBundleIdentifier, systemImage: "number")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                            }
+
+                            if !appStore.uninstallToolVersionText.isEmpty {
+                                Label(appStore.uninstallToolVersionText, systemImage: "tag")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+
+                            Text(rawPath)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(2)
+                                .textSelection(.enabled)
+                        } else {
+                            Text(appStore.localized(.uninstallToolNotConfigured))
+                                .font(.callout.weight(.semibold))
+                            Text(appStore.localized(.uninstallSectionDescription))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(2)
+                        }
+                    }
+
+                    Spacer(minLength: 0)
+                }
+                .padding(10)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color.red.opacity(0.07))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(Color.red.opacity(0.18), lineWidth: 1)
+                )
+
+                if appStore.uninstallToolConfiguredButMissing {
+                    Text(appStore.localized(.uninstallToolMissing))
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                }
+
+                HStack(spacing: 10) {
+                    Button(appStore.localized(.uninstallToolChooseButton)) {
+                        presentUninstallToolPicker()
+                    }
+                    .buttonStyle(.borderedProminent)
+
+                    Button(appStore.localized(.uninstallToolClearButton)) {
+                        _ = appStore.setUninstallToolApplication(url: nil)
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(appStore.uninstallToolAppPath.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+
+                    Spacer()
+
+                    Button(appStore.localized(.uninstallToolOpenButton)) {
+                        if !appStore.openConfiguredUninstallTool() {
+                            NSSound.beep()
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(appStore.uninstallToolAppURL == nil)
+                }
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .liquidGlass(in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text(appStore.localized(.uninstallSectionDescription))
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .liquidGlass(in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        }
+    }
     
     private var titlesSection: some View {
         LazyVStack(alignment: .leading, spacing: 16){
@@ -1439,6 +1586,8 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
         }
         .onChange(of: appStore.customTitles, initial: false, updateCachedAllAppEntries)
         .onChange(of: appStore.apps, initial: false, updateCachedAllAppEntries)
+        .onChange(of: appStore.folders, initial: false, updateCachedAllAppEntries)
+        .onChange(of: appStore.hiddenAppPaths, initial: false, updateCachedAllAppEntries)
     }
     
     private var customTitleEntries: [AppEntry] {
@@ -1578,6 +1727,22 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
 
         if panel.runModal() == .OK {
             if !appStore.hideApps(at: panel.urls) {
+                NSSound.beep()
+            }
+        }
+    }
+
+    private func presentUninstallToolPicker() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        panel.allowedContentTypes = [.applicationBundle]
+        panel.title = appStore.localized(.uninstallToolPanelTitle)
+        panel.prompt = appStore.localized(.uninstallToolChooseButton)
+
+        if panel.runModal() == .OK, let url = panel.url {
+            if !appStore.setUninstallToolApplication(url: url) {
                 NSSound.beep()
             }
         }
@@ -3580,6 +3745,7 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
                     keys.insert("isStartOnLogin")
                     keys.insert(AppStore.showQuickRefreshButtonKey)
                     keys.insert(AppStore.lockLayoutKey)
+                    keys.insert(AppStore.uninstallToolAppPathKey)
                 }
                 if appearanceCheckbox.state == .on {
                     keys.insert(AppStore.sidebarIconPresetKey)
