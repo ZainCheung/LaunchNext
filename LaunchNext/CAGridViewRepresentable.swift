@@ -58,8 +58,10 @@ struct CAGridViewRepresentable: NSViewRepresentable {
             switch item {
             case .app(let app):
                 onOpenApp?(app)
-                NSWorkspace.shared.open(app.url)
                 AppDelegate.shared?.hideWindow()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                    NSWorkspace.shared.open(app.url)
+                }
             case .folder(let folder):
                 onOpenFolder?(folder)
             case .missingApp:

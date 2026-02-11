@@ -1070,7 +1070,7 @@ final class AppStore: ObservableObject {
     }
 
     private static func defaultRememberSetting() -> Bool {
-        if UserDefaults.standard.object(forKey: rememberPageKey) == nil { return false }
+        if UserDefaults.standard.object(forKey: rememberPageKey) == nil { return true }
         return UserDefaults.standard.bool(forKey: rememberPageKey)
     }
 
@@ -1550,7 +1550,7 @@ final class AppStore: ObservableObject {
         }
         let defaults = UserDefaults.standard
 
-        let shouldRememberPage = defaults.object(forKey: Self.rememberPageKey) == nil ? false : defaults.bool(forKey: Self.rememberPageKey)
+        let shouldRememberPage = defaults.object(forKey: Self.rememberPageKey) == nil ? true : defaults.bool(forKey: Self.rememberPageKey)
         let savedPageIndex = defaults.object(forKey: Self.rememberedPageIndexKey) as? Int
 
         let initialScrollSensitivity: Double

@@ -244,6 +244,7 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
     case titles
     case appSources
     case hiddenApps
+    case shortcuts
     case backup
     case development
     // case aiOverlay
@@ -257,6 +258,7 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
     var iconName: String {
         switch self {
         case .general: return "gearshape"
+        case .shortcuts: return "keyboard"
         case .appSources: return "externaldrive"
         case .gameController: return "gamecontroller"
         case .sound: return "speaker.wave.2"
@@ -277,6 +279,8 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
         switch self {
         case .general:
             colors = [Color(red: 0.12, green: 0.52, blue: 0.96), Color(red: 0.22, green: 0.72, blue: 0.94)]
+        case .shortcuts:
+            colors = [Color(red: 0.22, green: 0.31, blue: 0.43), Color(red: 0.33, green: 0.55, blue: 0.72)]
         case .appSources:
             colors = [Color(nsColor: .systemGray), Color(nsColor: .lightGray)]
         case .sound:
@@ -308,6 +312,7 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
     var localizationKey: LocalizationKey {
         switch self {
         case .general: return .settingsSectionGeneral
+        case .shortcuts: return .globalShortcutTitle
         case .appSources: return .settingsSectionAppSources
         case .sound: return .settingsSectionSound
         case .gameController: return .settingsSectionGameController
@@ -379,6 +384,8 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
             appSourcesSection
         case .hiddenApps:
             hiddenAppsSection
+        case .shortcuts:
+            shortcutsSection
         case .backup:
             backupSection
         case .development:
@@ -1724,12 +1731,17 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
         stopShortcutCapture(cancel: false)
         pendingShortcut = nil
         capturingShortcutTarget = target
+        if target == .launchpad {
+            // Temporarily disable active hotkey while user is recording a new one.
+            AppDelegate.shared?.updateGlobalHotKey(configuration: nil)
+        }
         shortcutCaptureMonitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown]) { event in
             handleShortcutCapture(event: event)
         }
     }
 
     private func stopShortcutCapture(cancel: Bool) {
+        let hadCaptureTarget = capturingShortcutTarget
         if let monitor = shortcutCaptureMonitor {
             NSEvent.removeMonitor(monitor)
             shortcutCaptureMonitor = nil
@@ -1739,6 +1751,9 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
             if capturingShortcutTarget != nil { NSSound.beep() }
         }
         capturingShortcutTarget = nil
+        if hadCaptureTarget == .launchpad {
+            appStore.syncGlobalHotKeyRegistration()
+        }
     }
 
     private func handleShortcutCapture(event: NSEvent) -> NSEvent? {
@@ -2909,6 +2924,75 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
         appStore.saveAllOrder()
     }
 
+    private var shortcutsSection: some View {
+        let isCapturing = isCapturingShortcut(.launchpad)
+        let canSave = isCapturing && pendingShortcut != nil
+        let canClear = isCapturing || appStore.globalHotKey != nil
+
+        return VStack(alignment: .leading, spacing: 16) {
+            Text(appStore.localized(.globalShortcutDescription))
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+
+            if isCapturing {
+                Text(appStore.localized(.shortcutCapturePrompt))
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 10) {
+                    Image(systemName: "keyboard")
+                        .font(.headline)
+                        .foregroundStyle(.secondary)
+                    Text(shortcutStatusText(for: .launchpad))
+                        .font(.system(size: 13, weight: .medium, design: .monospaced))
+                        .textSelection(.enabled)
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    if isCapturing {
+                        Text(appStore.localized(.shortcutListening))
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                HStack(spacing: 12) {
+                    Button {
+                        if isCapturing {
+                            stopShortcutCapture(cancel: true)
+                        } else {
+                            startShortcutCapture(for: .launchpad)
+                        }
+                    } label: {
+                        Label(isCapturing ? appStore.localized(.cancel) : appStore.localized(.shortcutSetButton),
+                              systemImage: isCapturing ? "xmark.circle" : "keyboard")
+                    }
+                    .buttonStyle(.borderedProminent)
+
+                    Button(appStore.localized(.shortcutSaveButton)) {
+                        savePendingShortcut()
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(!canSave)
+
+                    Button(appStore.localized(.shortcutClearButton), role: .destructive) {
+                        if isCapturing {
+                            stopShortcutCapture(cancel: false)
+                            pendingShortcut = nil
+                        }
+                        appStore.clearGlobalHotKey()
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(!canClear)
+                }
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .liquidGlass(in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        }
+    }
+
     private var appearanceSection: some View {
         VStack(alignment: .leading, spacing: 24) {
             VStack(alignment: .leading, spacing: 16) {
@@ -3241,40 +3325,6 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
                 .font(.footnote)
                 .foregroundStyle(.secondary)
                 .padding(.top, 2)
-
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(appStore.localized(.globalShortcutTitle))
-                        .font(.headline)
-                    HStack(spacing: 12) {
-                        Button {
-                            if isCapturingShortcut(.launchpad) {
-                                stopShortcutCapture(cancel: true)
-                            } else {
-                                startShortcutCapture(for: .launchpad)
-                            }
-                        } label: {
-                            Text(isCapturingShortcut(.launchpad) ? appStore.localized(.cancel) : appStore.localized(.shortcutSetButton))
-                        }
-
-                        Button(appStore.localized(.shortcutSaveButton)) {
-                            savePendingShortcut()
-                        }
-                        .disabled(!(isCapturingShortcut(.launchpad) && pendingShortcut != nil))
-
-                        Button(appStore.localized(.shortcutClearButton)) {
-                            if isCapturingShortcut(.launchpad) {
-                                stopShortcutCapture(cancel: false)
-                                pendingShortcut = nil
-                            }
-                            appStore.clearGlobalHotKey()
-                        }
-                        .disabled(!isCapturingShortcut(.launchpad) && appStore.globalHotKey == nil)
-                    }
-
-                    Text(shortcutStatusText(for: .launchpad))
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                }
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text(appStore.localized(.labelFontSize))
