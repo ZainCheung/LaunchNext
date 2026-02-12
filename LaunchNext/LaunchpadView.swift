@@ -1738,10 +1738,10 @@ extension LaunchpadView {
                                 }
                             }
                     )
-                    .launchNextHideAppContextMenu(app: item.contextMenuApp, appStore: appStore)
+                    .launchNextHideAppContextMenu(app: item.contextMenuApp, folder: item.contextMenuFolder, appStore: appStore)
             } else {
                 base
-                    .launchNextHideAppContextMenu(app: item.contextMenuApp, appStore: appStore)
+                    .launchNextHideAppContextMenu(app: item.contextMenuApp, folder: item.contextMenuFolder, appStore: appStore)
             }
         }
     }

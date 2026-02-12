@@ -18,12 +18,19 @@ extension LaunchpadItem {
         }
         return nil
     }
+
+    var contextMenuFolder: FolderInfo? {
+        if case .folder(let folder) = self {
+            return folder
+        }
+        return nil
+    }
 }
 
 extension View {
     // Adds app-level context menu actions when the current tile is an app.
     @ViewBuilder
-    func launchNextHideAppContextMenu(app: AppInfo?, appStore: AppStore) -> some View {
+    func launchNextHideAppContextMenu(app: AppInfo?, folder: FolderInfo? = nil, appStore: AppStore) -> some View {
         if let app {
             contextMenu {
                 Button {
@@ -51,6 +58,14 @@ extension View {
                                 .foregroundStyle(.red)
                         }
                     }
+                }
+            }
+        } else if let folder {
+            contextMenu {
+                Button(role: .destructive) {
+                    _ = appStore.dissolveFolder(folder)
+                } label: {
+                    Label(appStore.localized(.contextMenuDissolveFolder), systemImage: "folder.badge.minus")
                 }
             }
         } else {
@@ -83,6 +98,7 @@ extension CAGridView {
         case .app(let app):
             // Keep the target app so action handler can execute hide.
             contextMenuTargetApp = app
+            contextMenuTargetFolder = nil
             let menu = NSMenu(title: "")
             let hideItem = NSMenuItem(
                 title: hideAppMenuTitle,
@@ -109,8 +125,26 @@ extension CAGridView {
                 menu.addItem(uninstallItem)
             }
             return menu
+        case .folder(let folder):
+            contextMenuTargetApp = nil
+            contextMenuTargetFolder = folder
+            let menu = NSMenu(title: "")
+            let dissolveItem = NSMenuItem(
+                title: dissolveFolderMenuTitle,
+                action: #selector(handleDissolveFolderFromContextMenu(_:)),
+                keyEquivalent: ""
+            )
+            dissolveItem.attributedTitle = NSAttributedString(
+                string: dissolveFolderMenuTitle,
+                attributes: [.foregroundColor: NSColor.systemRed]
+            )
+            dissolveItem.image = redMenuSymbolImage(named: "folder.badge.minus")
+            dissolveItem.target = self
+            menu.addItem(dissolveItem)
+            return menu
         default:
             contextMenuTargetApp = nil
+            contextMenuTargetFolder = nil
             return nil
         }
     }
@@ -119,12 +153,21 @@ extension CAGridView {
         guard let app = contextMenuTargetApp else { return }
         onHideApp?(app)
         contextMenuTargetApp = nil
+        contextMenuTargetFolder = nil
+    }
+
+    @objc private func handleDissolveFolderFromContextMenu(_ sender: NSMenuItem) {
+        guard let folder = contextMenuTargetFolder else { return }
+        onDissolveFolder?(folder)
+        contextMenuTargetApp = nil
+        contextMenuTargetFolder = nil
     }
 
     @objc private func handleUninstallWithToolFromContextMenu(_ sender: NSMenuItem) {
         guard let app = contextMenuTargetApp else { return }
         onUninstallWithTool?(app)
         contextMenuTargetApp = nil
+        contextMenuTargetFolder = nil
     }
 
 }

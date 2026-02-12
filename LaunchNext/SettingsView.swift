@@ -2538,6 +2538,13 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
                 }
                 .buttonStyle(.bordered)
                 .help(appStore.localized(.importTip))
+
+                Button {
+                    applyMacOS26PresetLayout()
+                } label: {
+                    Label(appStore.localized(.layoutPresetApplyButton), systemImage: "square.grid.3x3.topleft.filled")
+                }
+                .buttonStyle(.bordered)
             }
         }
         .padding(12)
@@ -3928,6 +3935,23 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
                 alert.runModal()
             }
         }
+    }
+
+    private func applyMacOS26PresetLayout() {
+        let success = appStore.applyMacOS26PresetLayout()
+
+        let alert = NSAlert()
+        if success {
+            alert.messageText = appStore.localized(.layoutPresetAppliedTitle)
+            alert.informativeText = appStore.localized(.layoutPresetAppliedMessage)
+            alert.alertStyle = .informational
+        } else {
+            alert.messageText = appStore.localized(.importFailedTitle)
+            alert.informativeText = appStore.localized(.layoutPresetApplyFailedMessage)
+            alert.alertStyle = .warning
+        }
+        alert.addButton(withTitle: appStore.localized(.okButton))
+        alert.runModal()
     }
 
     private func importLegacyArchive() {

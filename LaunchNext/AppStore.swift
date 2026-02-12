@@ -2881,6 +2881,76 @@ final class AppStore: ObservableObject {
         rebuildItems()
         saveAllOrder()
     }
+
+    @discardableResult
+    func dissolveFolder(_ folder: FolderInfo) -> Bool {
+        let folderID = folder.id
+
+        let resolvedFolder: FolderInfo
+        if let index = folders.firstIndex(where: { $0.id == folderID }) {
+            resolvedFolder = folders[index]
+            folders.remove(at: index)
+        } else if let itemIndex = items.firstIndex(where: {
+            if case .folder(let f) = $0 { return f.id == folderID }
+            return false
+        }), case .folder(let fallbackFolder) = items[itemIndex] {
+            resolvedFolder = fallbackFolder
+        } else {
+            return false
+        }
+
+        let folderApps = resolvedFolder.apps
+        let folderAppPaths = Set(folderApps.map { standardizedFilePath($0.url.path) })
+        var newItems = items
+
+        // Remove stale duplicates first; the folder slot will be reused for the first restored app.
+        if !folderAppPaths.isEmpty {
+            for idx in newItems.indices {
+                if case .app(let app) = newItems[idx],
+                   folderAppPaths.contains(standardizedFilePath(app.url.path)) {
+                    newItems[idx] = .empty(UUID().uuidString)
+                }
+            }
+        }
+
+        if let folderItemIndex = newItems.firstIndex(where: {
+            if case .folder(let f) = $0 { return f.id == folderID }
+            return false
+        }) {
+            newItems[folderItemIndex] = .empty(UUID().uuidString)
+            var insertIndex = folderItemIndex
+            for app in folderApps {
+                newItems = cascadeInsert(into: newItems, item: .app(app), at: insertIndex)
+                insertIndex += 1
+            }
+        } else if !folderApps.isEmpty {
+            newItems.append(contentsOf: folderApps.map { .app($0) })
+        }
+
+        var existingTopLevelPaths = Set(apps.map { standardizedFilePath($0.url.path) })
+        for app in folderApps {
+            let normalized = standardizedFilePath(app.url.path)
+            if !existingTopLevelPaths.contains(normalized) {
+                apps.append(app)
+                existingTopLevelPaths.insert(normalized)
+            }
+        }
+        apps.sort { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        pruneHiddenAppsFromAppList()
+
+        items = filteredItemsRemovingHidden(from: newItems)
+        if openFolder?.id == folderID {
+            openFolder = nil
+        }
+
+        compactItemsWithinPages()
+        removeEmptyPages()
+        triggerFolderUpdate()
+        triggerGridRefresh()
+        refreshCacheAfterFolderOperation()
+        saveAllOrder()
+        return true
+    }
     
     // 一键重置布局：完全重新扫描应用，删除所有文件夹、排序和empty填充
     func resetLayout() {
@@ -4474,6 +4544,196 @@ final class AppStore: ObservableObject {
         } catch {
             return false
         }
+    }
+
+    @discardableResult
+    func applyMacOS26PresetLayout() -> Bool {
+        let candidates = presetCandidateAppsInCurrentOrder()
+        guard !candidates.isEmpty else { return false }
+
+        let candidateByPath = Dictionary(uniqueKeysWithValues: candidates.map { ($0.path, $0) })
+        var unusedPaths = Set(candidates.map(\.path))
+        var rebuiltItems: [LaunchpadItem] = []
+        rebuiltItems.reserveCapacity(candidates.count + 1)
+        var rebuiltFolders: [FolderInfo] = []
+
+        for slot in LayoutPresetCatalog.macOS26Default.slots {
+            switch slot {
+            case let .app(bundleIdentifiers, aliases):
+                guard let matchedPath = matchPresetSlot(bundleIdentifiers: bundleIdentifiers,
+                                                        aliases: aliases,
+                                                        candidates: candidates,
+                                                        unusedPaths: unusedPaths),
+                      let matched = candidateByPath[matchedPath] else {
+                    continue
+                }
+                unusedPaths.remove(matchedPath)
+                rebuiltItems.append(.app(matched.app))
+            case .utilitiesFolder:
+                let folderApps = candidates
+                    .filter { unusedPaths.contains($0.path) && shouldIncludeInPresetOtherFolder($0) }
+                    .map(\.app)
+
+                guard !folderApps.isEmpty else { continue }
+                for app in folderApps {
+                    unusedPaths.remove(standardizedFilePath(app.url.path))
+                }
+
+                let folder = FolderInfo(name: localized(.layoutPresetOtherFolderTitle), apps: folderApps)
+                rebuiltFolders.append(folder)
+                rebuiltItems.append(.folder(folder))
+            }
+        }
+
+        let remainingApps = candidates
+            .filter { unusedPaths.contains($0.path) }
+            .map(\.app)
+        rebuiltItems.append(contentsOf: remainingApps.map { .app($0) })
+
+        guard !rebuiltItems.isEmpty else { return false }
+
+        apps = candidates.map(\.app)
+        pruneHiddenAppsFromAppList()
+        folders = sanitizedFolders(rebuiltFolders)
+        items = filteredItemsRemovingHidden(from: rebuiltItems)
+        openFolder = nil
+        compactItemsWithinPages()
+        removeEmptyPages()
+        currentPage = 0
+        if !searchText.isEmpty { searchText = "" }
+        refreshMissingPlaceholders()
+        triggerFolderUpdate()
+        triggerGridRefresh()
+        updateCacheAfterChanges()
+        saveAllOrder()
+        return true
+    }
+
+    private struct PresetAppCandidate {
+        let app: AppInfo
+        let path: String
+        let bundleIdentifier: String?
+        let normalizedNames: Set<String>
+    }
+
+    private func presetCandidateAppsInCurrentOrder() -> [PresetAppCandidate] {
+        var orderedApps: [AppInfo] = []
+        orderedApps.reserveCapacity(items.count + apps.count + folders.reduce(0) { $0 + $1.apps.count })
+
+        for item in items {
+            switch item {
+            case .app(let app):
+                orderedApps.append(app)
+            case .folder(let folder):
+                orderedApps.append(contentsOf: folder.apps)
+            case .empty:
+                break
+            case .missingApp:
+                break
+            }
+        }
+        orderedApps.append(contentsOf: apps)
+        for folder in folders {
+            orderedApps.append(contentsOf: folder.apps)
+        }
+
+        var seenPaths = Set<String>()
+        var result: [PresetAppCandidate] = []
+        result.reserveCapacity(orderedApps.count)
+
+        for app in orderedApps {
+            let path = standardizedFilePath(app.url.path)
+            guard !seenPaths.contains(path) else { continue }
+            guard !hiddenAppPaths.contains(path) && !hiddenAppPaths.contains(app.url.path) else { continue }
+            guard path.lowercased().hasSuffix(".app") else { continue }
+            guard FileManager.default.fileExists(atPath: path) else { continue }
+            seenPaths.insert(path)
+            result.append(presetCandidate(from: app, path: path))
+        }
+
+        return result
+    }
+
+    private func presetCandidate(from app: AppInfo, path: String) -> PresetAppCandidate {
+        let appURL = URL(fileURLWithPath: path)
+        let bundle = Bundle(url: appURL)
+        let bundleIdentifier = bundle?.bundleIdentifier?.lowercased()
+
+        var nameCandidates: [String] = [
+            app.name,
+            appURL.deletingPathExtension().lastPathComponent
+        ]
+        if let bundleDisplayName = bundle?.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String {
+            nameCandidates.append(bundleDisplayName)
+        }
+        if let bundleName = bundle?.object(forInfoDictionaryKey: "CFBundleName") as? String {
+            nameCandidates.append(bundleName)
+        }
+
+        let normalizedNames = Set(nameCandidates.map(normalizedPresetToken).filter { !$0.isEmpty })
+        return PresetAppCandidate(app: app,
+                                  path: path,
+                                  bundleIdentifier: bundleIdentifier,
+                                  normalizedNames: normalizedNames)
+    }
+
+    private func matchPresetSlot(bundleIdentifiers: [String],
+                                 aliases: [String],
+                                 candidates: [PresetAppCandidate],
+                                 unusedPaths: Set<String>) -> String? {
+        let normalizedBundleIDs = Set(bundleIdentifiers.map { $0.lowercased() }.filter { !$0.isEmpty })
+        if !normalizedBundleIDs.isEmpty {
+            for candidate in candidates where unusedPaths.contains(candidate.path) {
+                if let bundleIdentifier = candidate.bundleIdentifier,
+                   normalizedBundleIDs.contains(bundleIdentifier) {
+                    return candidate.path
+                }
+            }
+        }
+
+        let normalizedAliases = Set(aliases.map(normalizedPresetToken).filter { !$0.isEmpty })
+        guard !normalizedAliases.isEmpty else { return nil }
+
+        for candidate in candidates where unusedPaths.contains(candidate.path) {
+            if !normalizedAliases.isDisjoint(with: candidate.normalizedNames) {
+                return candidate.path
+            }
+        }
+
+        return nil
+    }
+
+    private func normalizedPresetToken(_ rawValue: String) -> String {
+        let folded = rawValue.folding(options: [.caseInsensitive, .diacriticInsensitive, .widthInsensitive],
+                                      locale: .current)
+        let scalars = folded.unicodeScalars.filter { CharacterSet.alphanumerics.contains($0) }
+        return String(String.UnicodeScalarView(scalars)).lowercased()
+    }
+
+    private func shouldIncludeInPresetOtherFolder(_ candidate: PresetAppCandidate) -> Bool {
+        if isAppInPresetUtilitiesFolders(candidate.path) {
+            return true
+        }
+        let lowerPath = candidate.path.lowercased()
+        if LayoutPresetCatalog.otherExtraPathSuffixes.contains(where: { lowerPath.hasSuffix($0) }) {
+            return true
+        }
+        if let bundleIdentifier = candidate.bundleIdentifier,
+           LayoutPresetCatalog.otherExtraBundleIDs.contains(bundleIdentifier) {
+            return true
+        }
+        let normalizedAliases = Set(LayoutPresetCatalog.otherExtraAliases.map(normalizedPresetToken))
+        return !normalizedAliases.isDisjoint(with: candidate.normalizedNames)
+    }
+
+    private func isAppInPresetUtilitiesFolders(_ path: String) -> Bool {
+        let normalizedPath = standardizedFilePath(path)
+        for root in LayoutPresetCatalog.utilityRootPaths {
+            if normalizedPath == root || normalizedPath.hasPrefix(root + "/") {
+                return true
+            }
+        }
+        return false
     }
 
     /// 从原生 macOS Launchpad 导入布局

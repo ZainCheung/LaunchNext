@@ -49,6 +49,7 @@ struct CAGridViewRepresentable: NSViewRepresentable {
         view.animationsEnabled = appStore.enableAnimations
         view.animationDuration = appStore.animationDuration
         view.hideAppMenuTitle = appStore.localized(.hiddenAppsAddButton)
+        view.dissolveFolderMenuTitle = appStore.localized(.contextMenuDissolveFolder)
         view.uninstallWithToolMenuTitle = appStore.localized(.contextMenuUninstallWithConfiguredTool)
         view.canUseConfiguredUninstallTool = appStore.uninstallToolAppURL != nil
         
@@ -101,6 +102,11 @@ struct CAGridViewRepresentable: NSViewRepresentable {
         view.onHideApp = { app in
             DispatchQueue.main.async {
                 _ = appStore.hideApp(app)
+            }
+        }
+        view.onDissolveFolder = { folder in
+            DispatchQueue.main.async {
+                _ = appStore.dissolveFolder(folder)
             }
         }
         view.onUninstallWithTool = { app in
@@ -228,6 +234,7 @@ struct CAGridViewRepresentable: NSViewRepresentable {
         nsView.animationDuration = appStore.animationDuration
         nsView.isScrollEnabled = appStore.openFolder == nil && !appStore.isSetting
         nsView.hideAppMenuTitle = appStore.localized(.hiddenAppsAddButton)
+        nsView.dissolveFolderMenuTitle = appStore.localized(.contextMenuDissolveFolder)
         nsView.uninstallWithToolMenuTitle = appStore.localized(.contextMenuUninstallWithConfiguredTool)
         nsView.canUseConfiguredUninstallTool = appStore.uninstallToolAppURL != nil
 
