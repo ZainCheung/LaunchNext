@@ -74,6 +74,7 @@ enum LocalizationKey: String {
     case enableAnimations
     case followScrollPagingTitle
     case followScrollPagingDescription
+    case reverseWheelPagingTitle
     case hideDockOption
     case hoverMagnification
     case hoverMagnificationScale
@@ -93,6 +94,45 @@ enum LocalizationKey: String {
     case importSystem
     case importLegacy
     case importTip
+    case onboardingTitle
+    case onboardingSubtitle
+    case onboardingFlowWelcomeTitle
+    case onboardingFlowWelcomeSubtitle
+    case onboardingFlowProgressFormat
+    case onboardingFlowPoweredBy
+    case onboardingFlowSkip
+    case onboardingFlowBack
+    case onboardingFlowStart
+    case onboardingFlowNext
+    case onboardingFlowDone
+    case onboardingFlowIntroTitle
+    case onboardingFlowIntroSubtitle
+    case onboardingFlowIntroImportItem
+    case onboardingFlowIntroPresetItem
+    case onboardingFlowIntroShortcutItem
+    case onboardingFlowLayoutStepTitle
+    case onboardingFlowLayoutStepSubtitle
+    case onboardingFlowLayoutChooseMethod
+    case onboardingFlowLayoutOptionATitle
+    case onboardingFlowLayoutOptionASubtitle
+    case onboardingFlowLayoutOptionADetail
+    case onboardingFlowLayoutOptionAUnavailableDetail
+    case onboardingFlowLayoutOptionAButton
+    case onboardingFlowLayoutOptionAUnavailableButton
+    case onboardingFlowLayoutOptionBTitle
+    case onboardingFlowLayoutOptionBSubtitle
+    case onboardingFlowLayoutOptionBDetail
+    case onboardingFlowLayoutOptionBButton
+    case onboardingFlowLayoutSkipButton
+    case onboardingFlowShortcutStepTitle
+    case onboardingFlowShortcutStepSubtitle
+    case onboardingFlowShortcutStepButton
+    case onboardingFlowCompletionHeadline
+    case onboardingFlowCompletionDescription
+    case onboardingFlowSidebarStart
+    case onboardingFlowSidebarLayout
+    case onboardingFlowSidebarShortcut
+    case onboardingFlowSidebarDone
     case exportData
     case importData
     case dataManagementTitle
@@ -192,6 +232,8 @@ enum LocalizationKey: String {
     case backupDeleteSingleMessage
     case developmentPlaceholderTitle
     case developmentPlaceholderSubtitle
+    case developmentForceOnboardingButton
+    case developmentForceOnboardingHint
     // case aiSectionComingSoonTitle
     // case aiSectionContextVision
     // case aiOverlayPreviewButtonLabel
@@ -236,6 +278,8 @@ enum LocalizationKey: String {
     case notHiddenAppsSearchPlaceholder
     case contextMenuDissolveFolder
     case contextMenuUninstallWithConfiguredTool
+    case contextMenuBatchSelectApps
+    case contextMenuFinishBatchSelection
     case uninstallSectionDescription
     case uninstallToolPathLabel
     case uninstallToolNotConfigured
@@ -414,6 +458,7 @@ final class LocalizationManager {
                 .enableAnimations: "Enable slide animation",
                 .followScrollPagingTitle: "Follow-scroll paging",
                 .followScrollPagingDescription: "Pages follow precise scrolling gestures (default off).",
+                .reverseWheelPagingTitle: "Reverse wheel page direction",
                 .hideDockOption: "Hide Dock",
                 .hoverMagnification: "Hover magnification",
                 .hoverMagnificationScale: "Hover scale",
@@ -438,6 +483,8 @@ final class LocalizationManager {
                 .importSystem: "Import System Launchpad",
                 .importLegacy: "Import Legacy (.lmy)",
                 .importTip: "Tip: Click ‘Import System Launchpad’ to import directly from the system Launchpad.",
+                .onboardingTitle: "Get LaunchNext ready",
+                .onboardingSubtitle: "Choose a setup action before loading and rendering all app icons.",
                 .exportData: "Export Data",
                 .importData: "Import Data",
                 .dataManagementTitle: "Data Management",
@@ -729,6 +776,8 @@ final class LocalizationManager {
             .settingsSectionUninstall: "Desinstalador",
             .contextMenuDissolveFolder: "Dissolver pasta",
             .contextMenuUninstallWithConfiguredTool: "Desinstalar com a ferramenta configurada",
+            .contextMenuBatchSelectApps: "Seleção em lote de apps",
+            .contextMenuFinishBatchSelection: "Concluir seleção em lote",
             .uninstallSectionDescription: "Escolha um app de desinstalação de terceiros (por exemplo, AppCleaner). O LaunchNext pode abri-lo quando necessário.",
             .uninstallToolPathLabel: "Desinstalador selecionado",
             .uninstallToolNotConfigured: "Nenhum desinstalador selecionado.",
@@ -971,6 +1020,7 @@ final class LocalizationManager {
                 .enableAnimations: "启用滑动动画",
                 .followScrollPagingTitle: "跟手翻页",
                 .followScrollPagingDescription: "精确滚动时页面跟随手势移动（默认关闭）。",
+                .reverseWheelPagingTitle: "反转滚轮翻页方向",
                 .hideDockOption: "隐藏 Dock",
                 .hoverMagnification: "悬停放大效果",
                 .hoverMagnificationScale: "悬停放大倍率",
@@ -995,6 +1045,8 @@ final class LocalizationManager {
                 .importSystem: "导入系统 Launchpad",
                 .importLegacy: "导入 Legacy (.lmy)",
                 .importTip: "提示：点击“导入系统 Launchpad”即可直接导入原生布局。",
+                .onboardingTitle: "先完成 LaunchNext 初始设置",
+                .onboardingSubtitle: "先选一项初始化操作，再开始加载并渲染全部应用图标。",
                 .exportData: "导出数据",
                 .importData: "导入数据",
                 .dataManagementTitle: "数据管理",
@@ -2375,6 +2427,8 @@ final class LocalizationManager {
             .backupDeleteSingleMessage: "This will permanently remove the selected backup.",
             .developmentPlaceholderTitle: "Development playground",
             .developmentPlaceholderSubtitle: "Reserved for future tools and experimental features.",
+            .developmentForceOnboardingButton: "Force show onboarding",
+            .developmentForceOnboardingHint: "Classic Launchpad (Fullscreen) only. Close Settings and show onboarding immediately for testing.",
             // .aiSectionComingSoonTitle: "AI (Coming Soon)",
             // .aiSectionContextVision: "Advances in AI come from understanding context and collaborating through seamless interfaces.",
             // .aiFeatureToggleTitle: "Enable AI features",
@@ -2420,6 +2474,8 @@ final class LocalizationManager {
             .notHiddenAppsSearchPlaceholder: "Filter not hidden apps",
             .contextMenuDissolveFolder: "Dissolve folder",
             .contextMenuUninstallWithConfiguredTool: "Uninstall with configured tool",
+            .contextMenuBatchSelectApps: "Batch Select Apps",
+            .contextMenuFinishBatchSelection: "Finish Batch Selection",
             .uninstallSectionDescription: "Choose a third-party uninstaller app (for example AppCleaner). LaunchNext can open it when needed.",
             .uninstallToolPathLabel: "Selected uninstaller",
             .uninstallToolNotConfigured: "No uninstaller selected.",
@@ -2461,7 +2517,47 @@ final class LocalizationManager {
             .performanceCacheCountsHint: "These numbers show item counts, not memory size.",
             .performanceCacheIconsDisabled: "Disabled in Next Engine",
             .performanceCacheLeanHint: "Next Engine skips icon caching to reduce memory use and stutter.",
-            .performanceModeRecommendation: "Recommended: Next Engine for lower memory and smoother performance."
+            .performanceModeRecommendation: "Recommended: Next Engine for lower memory and smoother performance.",
+
+            .onboardingFlowWelcomeTitle: "Welcome to LaunchNext",
+            .onboardingFlowWelcomeSubtitle: "Make LaunchNext yours.",
+            .onboardingFlowProgressFormat: "Step %d/%d",
+            .onboardingFlowPoweredBy: "Powered by RoversX / CloseX.org",
+            .onboardingFlowSkip: "Skip onboarding",
+            .onboardingFlowBack: "Back",
+            .onboardingFlowStart: "Start",
+            .onboardingFlowNext: "Next",
+            .onboardingFlowDone: "Done",
+            .onboardingFlowIntroTitle: "Ready to begin",
+            .onboardingFlowIntroSubtitle: "For first launch, complete these setup actions. You can skip now and continue later in Settings.",
+            .onboardingFlowIntroImportItem: "Import system layout",
+            .onboardingFlowIntroPresetItem: "Apply classic preset",
+            .onboardingFlowIntroShortcutItem: "Set global shortcut",
+            .onboardingFlowLayoutStepTitle: "Step 1: Initialize layout",
+            .onboardingFlowLayoutStepSubtitle: "Choose either system import or classic preset, or continue directly to the next step.",
+            .onboardingFlowLayoutChooseMethod: "Choose an initialization method",
+            .onboardingFlowLayoutOptionATitle: "Option A",
+            .onboardingFlowLayoutOptionASubtitle: "Import System Launchpad",
+            .onboardingFlowLayoutOptionADetail: "Closest to your current macOS layout.",
+            .onboardingFlowLayoutOptionAUnavailableDetail: "No importable system database was found.",
+            .onboardingFlowLayoutOptionAButton: "Use system layout",
+            .onboardingFlowLayoutOptionAUnavailableButton: "Unavailable",
+            .onboardingFlowLayoutOptionBTitle: "Option B",
+            .onboardingFlowLayoutOptionBSubtitle: "Apply Classic Layout Preset",
+            .onboardingFlowLayoutOptionBDetail: "Great for a fresh Mac; you can fine-tune later.",
+            .onboardingFlowLayoutOptionBButton: "Use classic preset",
+            .onboardingFlowLayoutSkipButton: "Skip for now and continue",
+            .onboardingFlowShortcutStepTitle: "Step 2: Set global shortcut",
+            .onboardingFlowShortcutStepSubtitle: "Configure a shortcut to open LaunchNext anytime without returning to the app window.",
+            .onboardingFlowShortcutStepButton: "Open shortcut settings",
+            .onboardingFlowCompletionHeadline: "Open-source, lightweight, customizable",
+            .onboardingFlowCompletionDescription: "Your app layout, your way.",
+            .onboardingFlowSidebarStart: "Start",
+            .onboardingFlowSidebarLayout: "Layout",
+            .onboardingFlowSidebarShortcut: "Shortcut",
+            .onboardingFlowSidebarDone: "Done"
+        
+
         ]) { _, new in new }
 
         builder[.simplifiedChinese]?.merge([
@@ -2507,6 +2603,8 @@ final class LocalizationManager {
             .backupDeleteSingleMessage: "将永久删除所选备份。",
             .developmentPlaceholderTitle: "开发功能预留",
             .developmentPlaceholderSubtitle: "未来将用于调试工具或实验功能。",
+            .developmentForceOnboardingButton: "强制显示引导",
+            .developmentForceOnboardingHint: "仅支持经典 Launchpad（全屏）模式。用于测试：会先关闭设置，再立即弹出 onboarding。",
             // .aiSectionComingSoonTitle: "AI（即将上线）",
             // .aiSectionContextVision: "人工智能的进步来自于理解上下文，并通过无缝的界面协同。",
             // .aiFeatureToggleTitle: "启用 AI 功能",
@@ -2552,6 +2650,8 @@ final class LocalizationManager {
             .notHiddenAppsSearchPlaceholder: "筛选未隐藏的应用",
             .contextMenuDissolveFolder: "解散文件夹",
             .contextMenuUninstallWithConfiguredTool: "用已配置卸载工具卸载",
+            .contextMenuBatchSelectApps: "批量选择应用",
+            .contextMenuFinishBatchSelection: "完成批量选择",
             .uninstallSectionDescription: "在这里指定第三方卸载工具（例如 AppCleaner），后续可直接打开使用。",
             .uninstallToolPathLabel: "已选择的卸载工具",
             .uninstallToolNotConfigured: "尚未选择卸载工具。",
@@ -2593,7 +2693,47 @@ final class LocalizationManager {
             .performanceCacheCountsHint: "这些数字表示缓存条目数量，并非内存大小。",
             .performanceCacheIconsDisabled: "Next 引擎已关闭",
             .performanceCacheLeanHint: "Next 引擎下会跳过图标缓存，以降低内存占用与卡顿。",
-            .performanceModeRecommendation: "默认推荐启用 Next 引擎（更省内存、降低卡顿）。"
+            .performanceModeRecommendation: "默认推荐启用 Next 引擎（更省内存、降低卡顿）。",
+
+            .onboardingFlowWelcomeTitle: "欢迎来到 LaunchNext",
+            .onboardingFlowWelcomeSubtitle: "您的 LaunchNext，您来定义。",
+            .onboardingFlowProgressFormat: "步骤 %d/%d",
+            .onboardingFlowPoweredBy: "Powered by RoversX / CloseX.org",
+            .onboardingFlowSkip: "跳过引导",
+            .onboardingFlowBack: "上一步",
+            .onboardingFlowStart: "开始",
+            .onboardingFlowNext: "下一步",
+            .onboardingFlowDone: "完成",
+            .onboardingFlowIntroTitle: "准备开始",
+            .onboardingFlowIntroSubtitle: "首次启动建议先完成这几个初始化操作。你可以随时跳过，后续在设置中继续。",
+            .onboardingFlowIntroImportItem: "导入系统布局",
+            .onboardingFlowIntroPresetItem: "应用经典预设",
+            .onboardingFlowIntroShortcutItem: "设置全局快捷键",
+            .onboardingFlowLayoutStepTitle: "第 1 步：初始化布局",
+            .onboardingFlowLayoutStepSubtitle: "导入系统布局和经典布局预设二选一，也可以直接下一步。",
+            .onboardingFlowLayoutChooseMethod: "选择一种初始化方式",
+            .onboardingFlowLayoutOptionATitle: "方式 A",
+            .onboardingFlowLayoutOptionASubtitle: "导入系统 Launchpad",
+            .onboardingFlowLayoutOptionADetail: "位置最接近你当前系统布局。",
+            .onboardingFlowLayoutOptionAUnavailableDetail: "未检测到可导入的系统数据库。",
+            .onboardingFlowLayoutOptionAButton: "使用系统布局",
+            .onboardingFlowLayoutOptionAUnavailableButton: "当前不可用",
+            .onboardingFlowLayoutOptionBTitle: "方式 B",
+            .onboardingFlowLayoutOptionBSubtitle: "应用经典布局预设",
+            .onboardingFlowLayoutOptionBDetail: "适合新机快速开始，后续可继续调整。",
+            .onboardingFlowLayoutOptionBButton: "使用经典预设",
+            .onboardingFlowLayoutSkipButton: "暂时跳过，直接下一步",
+            .onboardingFlowShortcutStepTitle: "第 2 步：设置全局快捷键",
+            .onboardingFlowShortcutStepSubtitle: "配置快捷键后可以随时唤出 LaunchNext，不用回到应用窗口。",
+            .onboardingFlowShortcutStepButton: "去设置快捷键",
+            .onboardingFlowCompletionHeadline: "开源、轻量、可定制",
+            .onboardingFlowCompletionDescription: "你的应用布局，现在由你定义。",
+            .onboardingFlowSidebarStart: "开始",
+            .onboardingFlowSidebarLayout: "布局",
+            .onboardingFlowSidebarShortcut: "快捷键",
+            .onboardingFlowSidebarDone: "完成"
+        
+
         ]) { _, new in new }
 
         builder[.japanese]?.merge([
@@ -2688,6 +2828,8 @@ final class LocalizationManager {
             .settingsSectionUninstall: "アンインストーラ",
             .contextMenuDissolveFolder: "フォルダを解散",
             .contextMenuUninstallWithConfiguredTool: "設定済みツールでアンインストール",
+            .contextMenuBatchSelectApps: "アプリを一括選択",
+            .contextMenuFinishBatchSelection: "一括選択を終了",
             .uninstallSectionDescription: "サードパーティのアンインストーラアプリ（例: AppCleaner）を選択します。必要なときに LaunchNext から開けます。",
             .uninstallToolPathLabel: "選択中のアンインストーラ",
             .uninstallToolNotConfigured: "アンインストーラが未選択です。",
@@ -2709,7 +2851,47 @@ final class LocalizationManager {
             .scanSourcesResetButton: "デフォルトに戻す",
             .scanSourcesEmptyHint: "まだカスタムフォルダはありません。追加してアプリを同期しましょう。",
             .scanSourcesMissingBadge: "オフライン",
-            .missingAppBadge: "オフライン"
+            .missingAppBadge: "オフライン",
+
+            .onboardingFlowWelcomeTitle: "LaunchNextへようこそ",
+            .onboardingFlowWelcomeSubtitle: "あなたの LaunchNext を、あなた好みに。",
+            .onboardingFlowProgressFormat: "ステップ %d/%d",
+            .onboardingFlowPoweredBy: "Powered by RoversX / CloseX.org",
+            .onboardingFlowSkip: "オンボーディングをスキップ",
+            .onboardingFlowBack: "戻る",
+            .onboardingFlowStart: "開始",
+            .onboardingFlowNext: "次へ",
+            .onboardingFlowDone: "完了",
+            .onboardingFlowIntroTitle: "始める準備",
+            .onboardingFlowIntroSubtitle: "初回起動では、まずこの初期設定を行うことをおすすめします。今はスキップして後で設定から続けられます。",
+            .onboardingFlowIntroImportItem: "システムレイアウトを読み込む",
+            .onboardingFlowIntroPresetItem: "クラシックプリセットを適用",
+            .onboardingFlowIntroShortcutItem: "グローバルショートカットを設定",
+            .onboardingFlowLayoutStepTitle: "ステップ1：レイアウトを初期化",
+            .onboardingFlowLayoutStepSubtitle: "システム読み込みかクラシックプリセットを選ぶか、そのまま次へ進めます。",
+            .onboardingFlowLayoutChooseMethod: "初期化方法を選択",
+            .onboardingFlowLayoutOptionATitle: "方式A",
+            .onboardingFlowLayoutOptionASubtitle: "システム Launchpad を読み込む",
+            .onboardingFlowLayoutOptionADetail: "現在の macOS レイアウトに最も近い配置になります。",
+            .onboardingFlowLayoutOptionAUnavailableDetail: "読み込み可能なシステムデータベースが見つかりません。",
+            .onboardingFlowLayoutOptionAButton: "システムレイアウトを使用",
+            .onboardingFlowLayoutOptionAUnavailableButton: "現在利用不可",
+            .onboardingFlowLayoutOptionBTitle: "方式B",
+            .onboardingFlowLayoutOptionBSubtitle: "クラシックレイアウトプリセットを適用",
+            .onboardingFlowLayoutOptionBDetail: "新しい Mac に最適。後で微調整できます。",
+            .onboardingFlowLayoutOptionBButton: "クラシックプリセットを使用",
+            .onboardingFlowLayoutSkipButton: "今回はスキップして次へ",
+            .onboardingFlowShortcutStepTitle: "ステップ2：グローバルショートカットを設定",
+            .onboardingFlowShortcutStepSubtitle: "ショートカットを設定すると、アプリ画面に戻らずいつでも LaunchNext を呼び出せます。",
+            .onboardingFlowShortcutStepButton: "ショートカット設定を開く",
+            .onboardingFlowCompletionHeadline: "オープンソース・軽量・カスタマイズ可能",
+            .onboardingFlowCompletionDescription: "アプリのレイアウトを、あなたの思い通りに。",
+            .onboardingFlowSidebarStart: "開始",
+            .onboardingFlowSidebarLayout: "レイアウト",
+            .onboardingFlowSidebarShortcut: "ショートカット",
+            .onboardingFlowSidebarDone: "完了"
+        
+
         ]) { _, new in new }
 
         builder[.korean]?.merge([
@@ -2804,6 +2986,8 @@ final class LocalizationManager {
             .settingsSectionUninstall: "제거 도구",
             .contextMenuDissolveFolder: "폴더 해제",
             .contextMenuUninstallWithConfiguredTool: "설정된 도구로 제거",
+            .contextMenuBatchSelectApps: "앱 일괄 선택",
+            .contextMenuFinishBatchSelection: "일괄 선택 완료",
             .uninstallSectionDescription: "서드파티 제거 앱(예: AppCleaner)을 선택하세요. 필요할 때 LaunchNext에서 열 수 있어요.",
             .uninstallToolPathLabel: "선택한 제거 도구",
             .uninstallToolNotConfigured: "제거 도구가 선택되지 않았어요.",
@@ -2825,7 +3009,47 @@ final class LocalizationManager {
             .scanSourcesResetButton: "기본값으로 복원",
             .scanSourcesEmptyHint: "사용자 경로가 아직 없어요. 추가하면 더 많은 앱을 동기화할 수 있어요.",
             .scanSourcesMissingBadge: "오프라인",
-            .missingAppBadge: "오프라인"
+            .missingAppBadge: "오프라인",
+
+            .onboardingFlowWelcomeTitle: "LaunchNext에 오신 것을 환영합니다",
+            .onboardingFlowWelcomeSubtitle: "당신만의 LaunchNext를 만들어보세요.",
+            .onboardingFlowProgressFormat: "단계 %d/%d",
+            .onboardingFlowPoweredBy: "Powered by RoversX / CloseX.org",
+            .onboardingFlowSkip: "온보딩 건너뛰기",
+            .onboardingFlowBack: "이전",
+            .onboardingFlowStart: "시작",
+            .onboardingFlowNext: "다음",
+            .onboardingFlowDone: "완료",
+            .onboardingFlowIntroTitle: "시작할 준비",
+            .onboardingFlowIntroSubtitle: "첫 실행에서는 아래 초기 설정을 먼저 완료하는 것을 권장해요. 지금 건너뛰고 나중에 설정에서 계속할 수 있어요.",
+            .onboardingFlowIntroImportItem: "시스템 레이아웃 가져오기",
+            .onboardingFlowIntroPresetItem: "클래식 프리셋 적용",
+            .onboardingFlowIntroShortcutItem: "전역 단축키 설정",
+            .onboardingFlowLayoutStepTitle: "1단계: 레이아웃 초기화",
+            .onboardingFlowLayoutStepSubtitle: "시스템 가져오기와 클래식 프리셋 중 하나를 선택하거나 바로 다음 단계로 진행할 수 있어요.",
+            .onboardingFlowLayoutChooseMethod: "초기화 방식을 선택하세요",
+            .onboardingFlowLayoutOptionATitle: "방식 A",
+            .onboardingFlowLayoutOptionASubtitle: "시스템 Launchpad 가져오기",
+            .onboardingFlowLayoutOptionADetail: "현재 macOS 레이아웃과 가장 비슷하게 맞춰져요.",
+            .onboardingFlowLayoutOptionAUnavailableDetail: "가져올 수 있는 시스템 데이터베이스를 찾지 못했어요.",
+            .onboardingFlowLayoutOptionAButton: "시스템 레이아웃 사용",
+            .onboardingFlowLayoutOptionAUnavailableButton: "현재 사용할 수 없음",
+            .onboardingFlowLayoutOptionBTitle: "방식 B",
+            .onboardingFlowLayoutOptionBSubtitle: "클래식 레이아웃 프리셋 적용",
+            .onboardingFlowLayoutOptionBDetail: "새 Mac에서 빠르게 시작하기 좋고, 나중에 세부 조정할 수 있어요.",
+            .onboardingFlowLayoutOptionBButton: "클래식 프리셋 사용",
+            .onboardingFlowLayoutSkipButton: "지금은 건너뛰고 다음으로",
+            .onboardingFlowShortcutStepTitle: "2단계: 전역 단축키 설정",
+            .onboardingFlowShortcutStepSubtitle: "단축키를 설정하면 앱 창으로 돌아가지 않고 언제든 LaunchNext를 열 수 있어요.",
+            .onboardingFlowShortcutStepButton: "단축키 설정 열기",
+            .onboardingFlowCompletionHeadline: "오픈소스 · 가볍고 · 자유롭게 커스터마이즈",
+            .onboardingFlowCompletionDescription: "앱 레이아웃을 원하는 대로 완성하세요.",
+            .onboardingFlowSidebarStart: "시작",
+            .onboardingFlowSidebarLayout: "레이아웃",
+            .onboardingFlowSidebarShortcut: "단축키",
+            .onboardingFlowSidebarDone: "완료"
+        
+
         ]) { _, new in new }
 
         builder[.vietnamese]?.merge([
@@ -2920,6 +3144,8 @@ final class LocalizationManager {
             .settingsSectionUninstall: "Công cụ gỡ cài đặt",
             .contextMenuDissolveFolder: "Giải tán thư mục",
             .contextMenuUninstallWithConfiguredTool: "Gỡ cài đặt bằng công cụ đã cấu hình",
+            .contextMenuBatchSelectApps: "Chọn hàng loạt ứng dụng",
+            .contextMenuFinishBatchSelection: "Hoàn tất chọn hàng loạt",
             .uninstallSectionDescription: "Chọn ứng dụng gỡ cài đặt bên thứ ba (ví dụ AppCleaner). LaunchNext có thể mở nó khi cần.",
             .uninstallToolPathLabel: "Công cụ gỡ cài đặt đã chọn",
             .uninstallToolNotConfigured: "Chưa chọn công cụ gỡ cài đặt.",
@@ -2941,7 +3167,47 @@ final class LocalizationManager {
             .scanSourcesResetButton: "Khôi phục mặc định",
             .scanSourcesEmptyHint: "Chưa có thư mục tuỳ chỉnh. Thêm để đồng bộ thêm ứng dụng.",
             .scanSourcesMissingBadge: "Ngoại tuyến",
-            .missingAppBadge: "Ngoại tuyến"
+            .missingAppBadge: "Ngoại tuyến",
+
+            .onboardingFlowWelcomeTitle: "Chào mừng đến với LaunchNext",
+            .onboardingFlowWelcomeSubtitle: "LaunchNext của bạn, do bạn quyết định.",
+            .onboardingFlowProgressFormat: "Bước %d/%d",
+            .onboardingFlowPoweredBy: "Powered by RoversX / CloseX.org",
+            .onboardingFlowSkip: "Bỏ qua hướng dẫn",
+            .onboardingFlowBack: "Quay lại",
+            .onboardingFlowStart: "Bắt đầu",
+            .onboardingFlowNext: "Tiếp theo",
+            .onboardingFlowDone: "Hoàn tất",
+            .onboardingFlowIntroTitle: "Sẵn sàng bắt đầu",
+            .onboardingFlowIntroSubtitle: "Ở lần chạy đầu tiên, nên hoàn tất các bước khởi tạo này. Bạn có thể bỏ qua và tiếp tục sau trong Cài đặt.",
+            .onboardingFlowIntroImportItem: "Nhập bố cục hệ thống",
+            .onboardingFlowIntroPresetItem: "Áp dụng preset cổ điển",
+            .onboardingFlowIntroShortcutItem: "Đặt phím tắt toàn cục",
+            .onboardingFlowLayoutStepTitle: "Bước 1: Khởi tạo bố cục",
+            .onboardingFlowLayoutStepSubtitle: "Chọn một trong hai cách: nhập từ hệ thống hoặc dùng preset cổ điển; hoặc đi thẳng tới bước tiếp theo.",
+            .onboardingFlowLayoutChooseMethod: "Chọn phương thức khởi tạo",
+            .onboardingFlowLayoutOptionATitle: "Phương án A",
+            .onboardingFlowLayoutOptionASubtitle: "Nhập Launchpad hệ thống",
+            .onboardingFlowLayoutOptionADetail: "Bố cục gần nhất với bố cục macOS hiện tại của bạn.",
+            .onboardingFlowLayoutOptionAUnavailableDetail: "Không tìm thấy cơ sở dữ liệu hệ thống có thể nhập.",
+            .onboardingFlowLayoutOptionAButton: "Dùng bố cục hệ thống",
+            .onboardingFlowLayoutOptionAUnavailableButton: "Hiện không khả dụng",
+            .onboardingFlowLayoutOptionBTitle: "Phương án B",
+            .onboardingFlowLayoutOptionBSubtitle: "Áp dụng preset bố cục cổ điển",
+            .onboardingFlowLayoutOptionBDetail: "Phù hợp cho máy mới, có thể tinh chỉnh sau.",
+            .onboardingFlowLayoutOptionBButton: "Dùng preset cổ điển",
+            .onboardingFlowLayoutSkipButton: "Tạm bỏ qua và tiếp tục",
+            .onboardingFlowShortcutStepTitle: "Bước 2: Đặt phím tắt toàn cục",
+            .onboardingFlowShortcutStepSubtitle: "Đặt phím tắt để mở LaunchNext bất cứ lúc nào mà không cần quay lại cửa sổ ứng dụng.",
+            .onboardingFlowShortcutStepButton: "Mở cài đặt phím tắt",
+            .onboardingFlowCompletionHeadline: "Mã nguồn mở, nhẹ và tùy biến cao",
+            .onboardingFlowCompletionDescription: "Bố cục ứng dụng của bạn, theo cách của bạn.",
+            .onboardingFlowSidebarStart: "Bắt đầu",
+            .onboardingFlowSidebarLayout: "Bố cục",
+            .onboardingFlowSidebarShortcut: "Phím tắt",
+            .onboardingFlowSidebarDone: "Xong"
+        
+
         ]) { _, new in new }
 
         builder[.french]?.merge([
@@ -3036,6 +3302,8 @@ final class LocalizationManager {
             .settingsSectionUninstall: "Désinstalleur",
             .contextMenuDissolveFolder: "Dissoudre le dossier",
             .contextMenuUninstallWithConfiguredTool: "Désinstaller avec l'outil configuré",
+            .contextMenuBatchSelectApps: "Sélection multiple d’apps",
+            .contextMenuFinishBatchSelection: "Terminer la sélection multiple",
             .uninstallSectionDescription: "Choisissez une app tierce de désinstallation (par exemple AppCleaner). LaunchNext peut l'ouvrir quand nécessaire.",
             .uninstallToolPathLabel: "Désinstalleur sélectionné",
             .uninstallToolNotConfigured: "Aucun désinstalleur sélectionné.",
@@ -3057,7 +3325,47 @@ final class LocalizationManager {
             .scanSourcesResetButton: "Restaurer par défaut",
             .scanSourcesEmptyHint: "Ajoutez des dossiers pour synchroniser des applications supplémentaires.",
             .scanSourcesMissingBadge: "Indisponible",
-            .missingAppBadge: "Indisponible"
+            .missingAppBadge: "Indisponible",
+
+            .onboardingFlowWelcomeTitle: "Bienvenue dans LaunchNext",
+            .onboardingFlowWelcomeSubtitle: "Votre LaunchNext, à votre façon.",
+            .onboardingFlowProgressFormat: "Étape %d/%d",
+            .onboardingFlowPoweredBy: "Powered by RoversX / CloseX.org",
+            .onboardingFlowSkip: "Ignorer l’onboarding",
+            .onboardingFlowBack: "Retour",
+            .onboardingFlowStart: "Commencer",
+            .onboardingFlowNext: "Suivant",
+            .onboardingFlowDone: "Terminer",
+            .onboardingFlowIntroTitle: "Prêt à commencer",
+            .onboardingFlowIntroSubtitle: "Au premier lancement, il est recommandé de terminer ces étapes d’initialisation. Vous pouvez ignorer maintenant et continuer plus tard dans Réglages.",
+            .onboardingFlowIntroImportItem: "Importer la disposition système",
+            .onboardingFlowIntroPresetItem: "Appliquer le préréglage classique",
+            .onboardingFlowIntroShortcutItem: "Configurer le raccourci global",
+            .onboardingFlowLayoutStepTitle: "Étape 1 : Initialiser la disposition",
+            .onboardingFlowLayoutStepSubtitle: "Choisissez soit l’import système soit le préréglage classique, ou passez directement à l’étape suivante.",
+            .onboardingFlowLayoutChooseMethod: "Choisissez une méthode d’initialisation",
+            .onboardingFlowLayoutOptionATitle: "Option A",
+            .onboardingFlowLayoutOptionASubtitle: "Importer le Launchpad système",
+            .onboardingFlowLayoutOptionADetail: "Le plus proche de votre disposition macOS actuelle.",
+            .onboardingFlowLayoutOptionAUnavailableDetail: "Aucune base de données système importable n’a été trouvée.",
+            .onboardingFlowLayoutOptionAButton: "Utiliser la disposition système",
+            .onboardingFlowLayoutOptionAUnavailableButton: "Indisponible",
+            .onboardingFlowLayoutOptionBTitle: "Option B",
+            .onboardingFlowLayoutOptionBSubtitle: "Appliquer le préréglage de disposition classique",
+            .onboardingFlowLayoutOptionBDetail: "Idéal pour un nouveau Mac, avec ajustements possibles ensuite.",
+            .onboardingFlowLayoutOptionBButton: "Utiliser le préréglage classique",
+            .onboardingFlowLayoutSkipButton: "Ignorer pour l’instant et continuer",
+            .onboardingFlowShortcutStepTitle: "Étape 2 : Configurer le raccourci global",
+            .onboardingFlowShortcutStepSubtitle: "Configurez un raccourci pour ouvrir LaunchNext à tout moment sans revenir à la fenêtre de l’app.",
+            .onboardingFlowShortcutStepButton: "Ouvrir les réglages de raccourci",
+            .onboardingFlowCompletionHeadline: "Open source, léger et personnalisable",
+            .onboardingFlowCompletionDescription: "Votre disposition d’apps, à votre manière.",
+            .onboardingFlowSidebarStart: "Début",
+            .onboardingFlowSidebarLayout: "Disposition",
+            .onboardingFlowSidebarShortcut: "Raccourci",
+            .onboardingFlowSidebarDone: "Terminé"
+        
+
         ]) { _, new in new }
 
         builder[.spanish]?.merge([
@@ -3152,6 +3460,8 @@ final class LocalizationManager {
             .settingsSectionUninstall: "Desinstalador",
             .contextMenuDissolveFolder: "Disolver carpeta",
             .contextMenuUninstallWithConfiguredTool: "Desinstalar con la herramienta configurada",
+            .contextMenuBatchSelectApps: "Selección múltiple de apps",
+            .contextMenuFinishBatchSelection: "Finalizar selección múltiple",
             .uninstallSectionDescription: "Elige una app de desinstalación de terceros (por ejemplo, AppCleaner). LaunchNext puede abrirla cuando sea necesario.",
             .uninstallToolPathLabel: "Desinstalador seleccionado",
             .uninstallToolNotConfigured: "No se ha seleccionado ningún desinstalador.",
@@ -3173,7 +3483,47 @@ final class LocalizationManager {
             .scanSourcesResetButton: "Restablecer predeterminados",
             .scanSourcesEmptyHint: "Todavía no hay directorios personalizados. Añade uno para sincronizar más apps.",
             .scanSourcesMissingBadge: "Sin conexión",
-            .missingAppBadge: "Sin conexión"
+            .missingAppBadge: "Sin conexión",
+
+            .onboardingFlowWelcomeTitle: "Bienvenido a LaunchNext",
+            .onboardingFlowWelcomeSubtitle: "Tu LaunchNext, a tu manera.",
+            .onboardingFlowProgressFormat: "Paso %d/%d",
+            .onboardingFlowPoweredBy: "Powered by RoversX / CloseX.org",
+            .onboardingFlowSkip: "Omitir guía",
+            .onboardingFlowBack: "Atrás",
+            .onboardingFlowStart: "Comenzar",
+            .onboardingFlowNext: "Siguiente",
+            .onboardingFlowDone: "Finalizar",
+            .onboardingFlowIntroTitle: "Listo para empezar",
+            .onboardingFlowIntroSubtitle: "En el primer inicio, se recomienda completar estas acciones de configuración. Puedes omitir ahora y continuar después en Ajustes.",
+            .onboardingFlowIntroImportItem: "Importar diseño del sistema",
+            .onboardingFlowIntroPresetItem: "Aplicar preajuste clásico",
+            .onboardingFlowIntroShortcutItem: "Configurar atajo global",
+            .onboardingFlowLayoutStepTitle: "Paso 1: Inicializar diseño",
+            .onboardingFlowLayoutStepSubtitle: "Elige entre importar del sistema o usar el preajuste clásico, o pasa directamente al siguiente paso.",
+            .onboardingFlowLayoutChooseMethod: "Elige un método de inicialización",
+            .onboardingFlowLayoutOptionATitle: "Opción A",
+            .onboardingFlowLayoutOptionASubtitle: "Importar Launchpad del sistema",
+            .onboardingFlowLayoutOptionADetail: "Es lo más cercano al diseño actual de macOS.",
+            .onboardingFlowLayoutOptionAUnavailableDetail: "No se encontró una base de datos del sistema importable.",
+            .onboardingFlowLayoutOptionAButton: "Usar diseño del sistema",
+            .onboardingFlowLayoutOptionAUnavailableButton: "No disponible",
+            .onboardingFlowLayoutOptionBTitle: "Opción B",
+            .onboardingFlowLayoutOptionBSubtitle: "Aplicar preajuste de diseño clásico",
+            .onboardingFlowLayoutOptionBDetail: "Ideal para un Mac nuevo; puedes ajustarlo después.",
+            .onboardingFlowLayoutOptionBButton: "Usar preajuste clásico",
+            .onboardingFlowLayoutSkipButton: "Omitir por ahora y continuar",
+            .onboardingFlowShortcutStepTitle: "Paso 2: Configurar atajo global",
+            .onboardingFlowShortcutStepSubtitle: "Configura un atajo para abrir LaunchNext en cualquier momento sin volver a la ventana de la app.",
+            .onboardingFlowShortcutStepButton: "Abrir ajustes de atajo",
+            .onboardingFlowCompletionHeadline: "Código abierto, ligero y personalizable",
+            .onboardingFlowCompletionDescription: "El diseño de tus apps, a tu manera.",
+            .onboardingFlowSidebarStart: "Inicio",
+            .onboardingFlowSidebarLayout: "Diseño",
+            .onboardingFlowSidebarShortcut: "Atajo",
+            .onboardingFlowSidebarDone: "Listo"
+        
+
         ]) { _, new in new }
 
         builder[.italian]?.merge([
@@ -3264,6 +3614,8 @@ final class LocalizationManager {
             .settingsSectionUninstall: "Disinstallatore",
             .contextMenuDissolveFolder: "Sciogli cartella",
             .contextMenuUninstallWithConfiguredTool: "Disinstalla con lo strumento configurato",
+            .contextMenuBatchSelectApps: "Selezione multipla app",
+            .contextMenuFinishBatchSelection: "Termina selezione multipla",
             .uninstallSectionDescription: "Scegli un'app di disinstallazione di terze parti (ad esempio AppCleaner). LaunchNext può aprirla quando necessario.",
             .uninstallToolPathLabel: "Disinstallatore selezionato",
             .uninstallToolNotConfigured: "Nessun disinstallatore selezionato.",
@@ -3276,6 +3628,46 @@ final class LocalizationManager {
             .accessibilityPlaceholderSubtitle: "Le opzioni di accessibilità arriveranno a breve.",
             .performancePlaceholderTitle: "Pannello prestazioni",
             .performancePlaceholderSubtitle: "Le metriche appariranno qui a breve.",
+        
+            .onboardingFlowWelcomeTitle: "Benvenuto in LaunchNext",
+            .onboardingFlowWelcomeSubtitle: "Il tuo LaunchNext, come vuoi tu.",
+            .onboardingFlowProgressFormat: "Passo %d/%d",
+            .onboardingFlowPoweredBy: "Powered by RoversX / CloseX.org",
+            .onboardingFlowSkip: "Salta onboarding",
+            .onboardingFlowBack: "Indietro",
+            .onboardingFlowStart: "Inizia",
+            .onboardingFlowNext: "Avanti",
+            .onboardingFlowDone: "Fine",
+            .onboardingFlowIntroTitle: "Pronto per iniziare",
+            .onboardingFlowIntroSubtitle: "Al primo avvio è consigliato completare queste operazioni iniziali. Puoi saltare ora e continuare più tardi dalle Impostazioni.",
+            .onboardingFlowIntroImportItem: "Importa layout di sistema",
+            .onboardingFlowIntroPresetItem: "Applica preset classico",
+            .onboardingFlowIntroShortcutItem: "Imposta scorciatoia globale",
+            .onboardingFlowLayoutStepTitle: "Passo 1: Inizializza layout",
+            .onboardingFlowLayoutStepSubtitle: "Scegli tra importazione dal sistema o preset classico, oppure passa direttamente al passaggio successivo.",
+            .onboardingFlowLayoutChooseMethod: "Scegli un metodo di inizializzazione",
+            .onboardingFlowLayoutOptionATitle: "Opzione A",
+            .onboardingFlowLayoutOptionASubtitle: "Importa Launchpad di sistema",
+            .onboardingFlowLayoutOptionADetail: "È l'opzione più vicina al layout macOS attuale.",
+            .onboardingFlowLayoutOptionAUnavailableDetail: "Nessun database di sistema importabile trovato.",
+            .onboardingFlowLayoutOptionAButton: "Usa layout di sistema",
+            .onboardingFlowLayoutOptionAUnavailableButton: "Non disponibile",
+            .onboardingFlowLayoutOptionBTitle: "Opzione B",
+            .onboardingFlowLayoutOptionBSubtitle: "Applica preset layout classico",
+            .onboardingFlowLayoutOptionBDetail: "Ideale per Mac nuovi; puoi rifinire dopo.",
+            .onboardingFlowLayoutOptionBButton: "Usa preset classico",
+            .onboardingFlowLayoutSkipButton: "Salta ora e continua",
+            .onboardingFlowShortcutStepTitle: "Passo 2: Imposta scorciatoia globale",
+            .onboardingFlowShortcutStepSubtitle: "Configura una scorciatoia per aprire LaunchNext in qualsiasi momento senza tornare alla finestra dell’app.",
+            .onboardingFlowShortcutStepButton: "Apri impostazioni scorciatoia",
+            .onboardingFlowCompletionHeadline: "Open source, leggero e personalizzabile",
+            .onboardingFlowCompletionDescription: "Il layout delle tue app, come vuoi tu.",
+            .onboardingFlowSidebarStart: "Inizio",
+            .onboardingFlowSidebarLayout: "Layout",
+            .onboardingFlowSidebarShortcut: "Scorciatoia",
+            .onboardingFlowSidebarDone: "Fine"
+        
+
         ]) { _, new in new }
 
         builder[.czech]?.merge([
@@ -3370,6 +3762,8 @@ final class LocalizationManager {
             .settingsSectionUninstall: "Odinstalátor",
             .contextMenuDissolveFolder: "Rozpustit složku",
             .contextMenuUninstallWithConfiguredTool: "Odinstalovat pomocí nastaveného nástroje",
+            .contextMenuBatchSelectApps: "Hromadný výběr aplikací",
+            .contextMenuFinishBatchSelection: "Dokončit hromadný výběr",
             .uninstallSectionDescription: "Vyberte aplikaci třetí strany pro odinstalaci (např. AppCleaner). LaunchNext ji může v případě potřeby otevřít.",
             .uninstallToolPathLabel: "Vybraný odinstalátor",
             .uninstallToolNotConfigured: "Není vybrán žádný odinstalátor.",
@@ -3391,7 +3785,47 @@ final class LocalizationManager {
             .scanSourcesResetButton: "Obnovit výchozí",
             .scanSourcesEmptyHint: "Zatím žádné vlastní cesty. Přidejte je pro synchronizaci dalších aplikací.",
             .scanSourcesMissingBadge: "Offline",
-            .missingAppBadge: "Offline"
+            .missingAppBadge: "Offline",
+
+            .onboardingFlowWelcomeTitle: "Vítejte v LaunchNext",
+            .onboardingFlowWelcomeSubtitle: "Váš LaunchNext, podle vás.",
+            .onboardingFlowProgressFormat: "Krok %d/%d",
+            .onboardingFlowPoweredBy: "Powered by RoversX / CloseX.org",
+            .onboardingFlowSkip: "Přeskočit průvodce",
+            .onboardingFlowBack: "Zpět",
+            .onboardingFlowStart: "Začít",
+            .onboardingFlowNext: "Další",
+            .onboardingFlowDone: "Dokončit",
+            .onboardingFlowIntroTitle: "Připraveno začít",
+            .onboardingFlowIntroSubtitle: "Při prvním spuštění doporučujeme dokončit tyto inicializační kroky. Teď můžete přeskočit a pokračovat později v Nastavení.",
+            .onboardingFlowIntroImportItem: "Importovat systémové rozložení",
+            .onboardingFlowIntroPresetItem: "Použít klasickou předvolbu",
+            .onboardingFlowIntroShortcutItem: "Nastavit globální zkratku",
+            .onboardingFlowLayoutStepTitle: "Krok 1: Inicializace rozložení",
+            .onboardingFlowLayoutStepSubtitle: "Vyberte import ze systému nebo klasickou předvolbu, případně přejděte rovnou na další krok.",
+            .onboardingFlowLayoutChooseMethod: "Vyberte metodu inicializace",
+            .onboardingFlowLayoutOptionATitle: "Možnost A",
+            .onboardingFlowLayoutOptionASubtitle: "Importovat systémový Launchpad",
+            .onboardingFlowLayoutOptionADetail: "Nejbližší vašemu aktuálnímu rozložení macOS.",
+            .onboardingFlowLayoutOptionAUnavailableDetail: "Nebyla nalezena importovatelná systémová databáze.",
+            .onboardingFlowLayoutOptionAButton: "Použít systémové rozložení",
+            .onboardingFlowLayoutOptionAUnavailableButton: "Nedostupné",
+            .onboardingFlowLayoutOptionBTitle: "Možnost B",
+            .onboardingFlowLayoutOptionBSubtitle: "Použít klasickou předvolbu rozložení",
+            .onboardingFlowLayoutOptionBDetail: "Vhodné pro nový Mac, později můžete doladit.",
+            .onboardingFlowLayoutOptionBButton: "Použít klasickou předvolbu",
+            .onboardingFlowLayoutSkipButton: "Teď přeskočit a pokračovat",
+            .onboardingFlowShortcutStepTitle: "Krok 2: Nastavení globální zkratky",
+            .onboardingFlowShortcutStepSubtitle: "Nastavte zkratku a otevřete LaunchNext kdykoli bez návratu do okna aplikace.",
+            .onboardingFlowShortcutStepButton: "Otevřít nastavení zkratky",
+            .onboardingFlowCompletionHeadline: "Open source, lehký a přizpůsobitelný",
+            .onboardingFlowCompletionDescription: "Rozložení aplikací podle vás.",
+            .onboardingFlowSidebarStart: "Start",
+            .onboardingFlowSidebarLayout: "Rozložení",
+            .onboardingFlowSidebarShortcut: "Zkratka",
+            .onboardingFlowSidebarDone: "Hotovo"
+        
+
         ]) { _, new in new }
         
         builder[.german]?.merge([
@@ -3486,6 +3920,8 @@ final class LocalizationManager {
             .settingsSectionUninstall: "Deinstallierer",
             .contextMenuDissolveFolder: "Ordner auflösen",
             .contextMenuUninstallWithConfiguredTool: "Mit konfiguriertem Tool deinstallieren",
+            .contextMenuBatchSelectApps: "Apps mehrfach auswählen",
+            .contextMenuFinishBatchSelection: "Mehrfachauswahl beenden",
             .uninstallSectionDescription: "Wähle eine Drittanbieter-Deinstallations-App (z. B. AppCleaner). LaunchNext kann sie bei Bedarf öffnen.",
             .uninstallToolPathLabel: "Ausgewählter Deinstallierer",
             .uninstallToolNotConfigured: "Kein Deinstallierer ausgewählt.",
@@ -3507,7 +3943,47 @@ final class LocalizationManager {
             .scanSourcesResetButton: "Standard wiederherstellen",
             .scanSourcesEmptyHint: "Noch keine eigenen Pfade. Füge welche hinzu, um weitere Apps zu synchronisieren.",
             .scanSourcesMissingBadge: "Offline",
-            .missingAppBadge: "Offline"
+            .missingAppBadge: "Offline",
+
+            .onboardingFlowWelcomeTitle: "Willkommen bei LaunchNext",
+            .onboardingFlowWelcomeSubtitle: "Dein LaunchNext, so wie du es willst.",
+            .onboardingFlowProgressFormat: "Schritt %d/%d",
+            .onboardingFlowPoweredBy: "Powered by RoversX / CloseX.org",
+            .onboardingFlowSkip: "Onboarding überspringen",
+            .onboardingFlowBack: "Zurück",
+            .onboardingFlowStart: "Starten",
+            .onboardingFlowNext: "Weiter",
+            .onboardingFlowDone: "Fertig",
+            .onboardingFlowIntroTitle: "Bereit zum Start",
+            .onboardingFlowIntroSubtitle: "Beim ersten Start empfehlen wir, diese Initialisierungsschritte abzuschließen. Du kannst jetzt überspringen und später in den Einstellungen fortfahren.",
+            .onboardingFlowIntroImportItem: "Systemlayout importieren",
+            .onboardingFlowIntroPresetItem: "Klassisches Preset anwenden",
+            .onboardingFlowIntroShortcutItem: "Globalen Shortcut einrichten",
+            .onboardingFlowLayoutStepTitle: "Schritt 1: Layout initialisieren",
+            .onboardingFlowLayoutStepSubtitle: "Wähle entweder den Systemimport oder das klassische Preset, oder gehe direkt zum nächsten Schritt.",
+            .onboardingFlowLayoutChooseMethod: "Wähle eine Initialisierungsmethode",
+            .onboardingFlowLayoutOptionATitle: "Option A",
+            .onboardingFlowLayoutOptionASubtitle: "System-Launchpad importieren",
+            .onboardingFlowLayoutOptionADetail: "Am nächsten an deinem aktuellen macOS-Layout.",
+            .onboardingFlowLayoutOptionAUnavailableDetail: "Keine importierbare Systemdatenbank gefunden.",
+            .onboardingFlowLayoutOptionAButton: "Systemlayout verwenden",
+            .onboardingFlowLayoutOptionAUnavailableButton: "Nicht verfügbar",
+            .onboardingFlowLayoutOptionBTitle: "Option B",
+            .onboardingFlowLayoutOptionBSubtitle: "Klassisches Layout-Preset anwenden",
+            .onboardingFlowLayoutOptionBDetail: "Ideal für neue Macs; Feinabstimmung später möglich.",
+            .onboardingFlowLayoutOptionBButton: "Klassisches Preset verwenden",
+            .onboardingFlowLayoutSkipButton: "Jetzt überspringen und fortfahren",
+            .onboardingFlowShortcutStepTitle: "Schritt 2: Globalen Shortcut einrichten",
+            .onboardingFlowShortcutStepSubtitle: "Richte einen Shortcut ein, um LaunchNext jederzeit zu öffnen, ohne zum App-Fenster zurückzukehren.",
+            .onboardingFlowShortcutStepButton: "Shortcut-Einstellungen öffnen",
+            .onboardingFlowCompletionHeadline: "Open Source, leichtgewichtig und anpassbar",
+            .onboardingFlowCompletionDescription: "Dein App-Layout, dein Weg.",
+            .onboardingFlowSidebarStart: "Start",
+            .onboardingFlowSidebarLayout: "Layout",
+            .onboardingFlowSidebarShortcut: "Shortcut",
+            .onboardingFlowSidebarDone: "Fertig"
+        
+
         ]) { _, new in new }
 
         builder[.russian]?.merge([
@@ -3602,6 +4078,8 @@ final class LocalizationManager {
             .settingsSectionUninstall: "Деинсталлятор",
             .contextMenuDissolveFolder: "Расформировать папку",
             .contextMenuUninstallWithConfiguredTool: "Удалить с помощью настроенного инструмента",
+            .contextMenuBatchSelectApps: "Множественный выбор приложений",
+            .contextMenuFinishBatchSelection: "Завершить множественный выбор",
             .uninstallSectionDescription: "Выберите стороннее приложение для удаления (например, AppCleaner). LaunchNext сможет открыть его при необходимости.",
             .uninstallToolPathLabel: "Выбранный деинсталлятор",
             .uninstallToolNotConfigured: "Деинсталлятор не выбран.",
@@ -3623,7 +4101,47 @@ final class LocalizationManager {
             .scanSourcesResetButton: "Восстановить по умолчанию",
             .scanSourcesEmptyHint: "Пользовательских каталогов пока нет. Добавьте их, чтобы синхронизировать больше приложений.",
             .scanSourcesMissingBadge: "Офлайн",
-            .missingAppBadge: "Офлайн"
+            .missingAppBadge: "Офлайн",
+
+            .onboardingFlowWelcomeTitle: "Добро пожаловать в LaunchNext",
+            .onboardingFlowWelcomeSubtitle: "Ваш LaunchNext — по вашим правилам.",
+            .onboardingFlowProgressFormat: "Шаг %d/%d",
+            .onboardingFlowPoweredBy: "Powered by RoversX / CloseX.org",
+            .onboardingFlowSkip: "Пропустить онбординг",
+            .onboardingFlowBack: "Назад",
+            .onboardingFlowStart: "Начать",
+            .onboardingFlowNext: "Далее",
+            .onboardingFlowDone: "Готово",
+            .onboardingFlowIntroTitle: "Готово к началу",
+            .onboardingFlowIntroSubtitle: "При первом запуске рекомендуется выполнить эти шаги инициализации. Можно пропустить сейчас и продолжить позже в настройках.",
+            .onboardingFlowIntroImportItem: "Импортировать системный макет",
+            .onboardingFlowIntroPresetItem: "Применить классический пресет",
+            .onboardingFlowIntroShortcutItem: "Настроить глобальное сочетание клавиш",
+            .onboardingFlowLayoutStepTitle: "Шаг 1: Инициализация макета",
+            .onboardingFlowLayoutStepSubtitle: "Выберите импорт из системы или классический пресет, либо сразу перейдите к следующему шагу.",
+            .onboardingFlowLayoutChooseMethod: "Выберите способ инициализации",
+            .onboardingFlowLayoutOptionATitle: "Вариант A",
+            .onboardingFlowLayoutOptionASubtitle: "Импортировать системный Launchpad",
+            .onboardingFlowLayoutOptionADetail: "Максимально близко к текущему макету macOS.",
+            .onboardingFlowLayoutOptionAUnavailableDetail: "Не найдена системная база данных для импорта.",
+            .onboardingFlowLayoutOptionAButton: "Использовать системный макет",
+            .onboardingFlowLayoutOptionAUnavailableButton: "Недоступно",
+            .onboardingFlowLayoutOptionBTitle: "Вариант B",
+            .onboardingFlowLayoutOptionBSubtitle: "Применить классический пресет макета",
+            .onboardingFlowLayoutOptionBDetail: "Подходит для нового Mac; позже можно донастроить.",
+            .onboardingFlowLayoutOptionBButton: "Использовать классический пресет",
+            .onboardingFlowLayoutSkipButton: "Пропустить сейчас и продолжить",
+            .onboardingFlowShortcutStepTitle: "Шаг 2: Настроить глобальное сочетание",
+            .onboardingFlowShortcutStepSubtitle: "Настройте сочетание, чтобы открывать LaunchNext в любой момент без возврата к окну приложения.",
+            .onboardingFlowShortcutStepButton: "Открыть настройки сочетания",
+            .onboardingFlowCompletionHeadline: "Открытый код, лёгкий и настраиваемый",
+            .onboardingFlowCompletionDescription: "Расположение приложений — по-вашему.",
+            .onboardingFlowSidebarStart: "Старт",
+            .onboardingFlowSidebarLayout: "Макет",
+            .onboardingFlowSidebarShortcut: "Сочетание",
+            .onboardingFlowSidebarDone: "Готово"
+        
+
         ]) { _, new in new }
 
         builder[.japanese]?.merge([
@@ -4123,8 +4641,72 @@ final class LocalizationManager {
             .aboutInfoDisplayTitle: "Telas",
             .aboutInfoUnknownChip: "Chip desconhecido",
             .aboutInfoUnknownDisplay: "Desconhecido",
-            .aboutInfoDisplayGeneric: "Tela"
+            .aboutInfoDisplayGeneric: "Tela",
+
+            .onboardingFlowWelcomeTitle: "Bem-vindo ao LaunchNext",
+            .onboardingFlowWelcomeSubtitle: "O seu LaunchNext, do seu jeito.",
+            .onboardingFlowProgressFormat: "Etapa %d/%d",
+            .onboardingFlowPoweredBy: "Powered by RoversX / CloseX.org",
+            .onboardingFlowSkip: "Pular onboarding",
+            .onboardingFlowBack: "Voltar",
+            .onboardingFlowStart: "Começar",
+            .onboardingFlowNext: "Próximo",
+            .onboardingFlowDone: "Concluir",
+            .onboardingFlowIntroTitle: "Pronto para começar",
+            .onboardingFlowIntroSubtitle: "Na primeira execução, recomendamos concluir estas etapas iniciais. Você pode pular agora e continuar depois em Ajustes.",
+            .onboardingFlowIntroImportItem: "Importar layout do sistema",
+            .onboardingFlowIntroPresetItem: "Aplicar preset clássico",
+            .onboardingFlowIntroShortcutItem: "Configurar atalho global",
+            .onboardingFlowLayoutStepTitle: "Etapa 1: Inicializar layout",
+            .onboardingFlowLayoutStepSubtitle: "Escolha entre importar do sistema ou aplicar o preset clássico, ou avance direto para a próxima etapa.",
+            .onboardingFlowLayoutChooseMethod: "Escolha um método de inicialização",
+            .onboardingFlowLayoutOptionATitle: "Opção A",
+            .onboardingFlowLayoutOptionASubtitle: "Importar Launchpad do sistema",
+            .onboardingFlowLayoutOptionADetail: "Fica mais próximo do layout atual do macOS.",
+            .onboardingFlowLayoutOptionAUnavailableDetail: "Nenhum banco de dados do sistema importável foi encontrado.",
+            .onboardingFlowLayoutOptionAButton: "Usar layout do sistema",
+            .onboardingFlowLayoutOptionAUnavailableButton: "Indisponível",
+            .onboardingFlowLayoutOptionBTitle: "Opção B",
+            .onboardingFlowLayoutOptionBSubtitle: "Aplicar preset de layout clássico",
+            .onboardingFlowLayoutOptionBDetail: "Ideal para Macs novos; você pode ajustar depois.",
+            .onboardingFlowLayoutOptionBButton: "Usar preset clássico",
+            .onboardingFlowLayoutSkipButton: "Pular por enquanto e continuar",
+            .onboardingFlowShortcutStepTitle: "Etapa 2: Configurar atalho global",
+            .onboardingFlowShortcutStepSubtitle: "Configure um atalho para abrir o LaunchNext a qualquer momento sem voltar para a janela do app.",
+            .onboardingFlowShortcutStepButton: "Abrir ajustes de atalho",
+            .onboardingFlowCompletionHeadline: "Código aberto, leve e personalizável",
+            .onboardingFlowCompletionDescription: "O layout dos seus apps, do seu jeito.",
+            .onboardingFlowSidebarStart: "Início",
+            .onboardingFlowSidebarLayout: "Layout",
+            .onboardingFlowSidebarShortcut: "Atalho",
+            .onboardingFlowSidebarDone: "Concluído"
+        
+
         ]) { _, new in new }
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
 
         var hindiDictionary = builder[.english] ?? [:]
         hindiDictionary[.languagePickerTitle] = "भाषा"
@@ -4334,6 +4916,8 @@ final class LocalizationManager {
             .settingsSectionUninstall: "अनइंस्टॉलर",
             .contextMenuDissolveFolder: "फ़ोल्डर भंग करें",
             .contextMenuUninstallWithConfiguredTool: "कॉन्फ़िगर किए गए टूल से अनइंस्टॉल करें",
+            .contextMenuBatchSelectApps: "ऐप्स का बैच चयन",
+            .contextMenuFinishBatchSelection: "बैच चयन समाप्त करें",
             .uninstallSectionDescription: "थर्ड-पार्टी अनइंस्टॉलर ऐप (जैसे AppCleaner) चुनें। जरूरत होने पर LaunchNext इसे खोल सकता है।",
             .uninstallToolPathLabel: "चुना गया अनइंस्टॉलर",
             .uninstallToolNotConfigured: "कोई अनइंस्टॉलर चुना नहीं गया है।",
@@ -4416,6 +5000,7 @@ final class LocalizationManager {
         ]) { _, new in new }
 
         builder[.hindi] = hindiDictionary
+        
 
         translations = builder
     }

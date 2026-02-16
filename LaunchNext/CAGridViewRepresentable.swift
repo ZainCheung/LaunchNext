@@ -42,6 +42,7 @@ struct CAGridViewRepresentable: NSViewRepresentable {
         view.folderPreviewScale = appStore.enableHighResFolderPreviews ? preferredScale : 1
         view.enableIconPreload = false
         view.scrollSensitivity = appStore.scrollSensitivity
+        view.reverseWheelPagingDirection = appStore.reverseWheelPagingDirection
         view.hoverMagnificationEnabled = appStore.enableHoverMagnification
         view.hoverMagnificationScale = CGFloat(appStore.hoverMagnificationScale)
         view.activePressEffectEnabled = appStore.enableActivePressEffect
@@ -51,7 +52,10 @@ struct CAGridViewRepresentable: NSViewRepresentable {
         view.hideAppMenuTitle = appStore.localized(.hiddenAppsAddButton)
         view.dissolveFolderMenuTitle = appStore.localized(.contextMenuDissolveFolder)
         view.uninstallWithToolMenuTitle = appStore.localized(.contextMenuUninstallWithConfiguredTool)
+        view.batchSelectAppsMenuTitle = appStore.localized(.contextMenuBatchSelectApps)
+        view.finishBatchSelectionMenuTitle = appStore.localized(.contextMenuFinishBatchSelection)
         view.canUseConfiguredUninstallTool = appStore.uninstallToolAppURL != nil
+        view.allowsBatchSelectionMode = appStore.searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         
         // Set current page BEFORE items to ensure correct initial position
         view.setInitialPage(appStore.currentPage)
@@ -169,6 +173,12 @@ struct CAGridViewRepresentable: NSViewRepresentable {
             }
         }
 
+        view.onReorderAppBatch = { appPathsOrdered, toIndex in
+            DispatchQueue.main.async {
+                appStore.moveSelectedAppsAcrossPagesWithCascade(appPathsOrdered: appPathsOrdered, to: toIndex)
+            }
+        }
+
         // 请求创建新页面（拖拽到右边缘时）
         view.onRequestNewPage = {
             DispatchQueue.main.async {
@@ -226,6 +236,7 @@ struct CAGridViewRepresentable: NSViewRepresentable {
         nsView.scrollSensitivity = appStore.scrollSensitivity
         nsView.enableIconPreload = false
         nsView.scrollSensitivity = appStore.scrollSensitivity
+        nsView.reverseWheelPagingDirection = appStore.reverseWheelPagingDirection
         nsView.hoverMagnificationEnabled = appStore.enableHoverMagnification
         nsView.hoverMagnificationScale = CGFloat(appStore.hoverMagnificationScale)
         nsView.activePressEffectEnabled = appStore.enableActivePressEffect
@@ -236,7 +247,10 @@ struct CAGridViewRepresentable: NSViewRepresentable {
         nsView.hideAppMenuTitle = appStore.localized(.hiddenAppsAddButton)
         nsView.dissolveFolderMenuTitle = appStore.localized(.contextMenuDissolveFolder)
         nsView.uninstallWithToolMenuTitle = appStore.localized(.contextMenuUninstallWithConfiguredTool)
+        nsView.batchSelectAppsMenuTitle = appStore.localized(.contextMenuBatchSelectApps)
+        nsView.finishBatchSelectionMenuTitle = appStore.localized(.contextMenuFinishBatchSelection)
         nsView.canUseConfiguredUninstallTool = appStore.uninstallToolAppURL != nil
+        nsView.allowsBatchSelectionMode = appStore.searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
 
         // 检查刷新触发器是否变化（文件夹创建/修改会触发）
         let triggerChanged = context.coordinator.lastGridRefreshTrigger != gridRefreshTrigger ||

@@ -206,6 +206,7 @@ extension CAGridView {
         guard scaledDelta != 0 else { return }
 
         let direction = scaledDelta > 0 ? 1 : -1
+        let effectiveDirection = reverseWheelPagingDirection ? -direction : direction
         if wheelLastDirection != direction {
             wheelAccumulatedDelta = 0
         }
@@ -221,8 +222,8 @@ extension CAGridView {
             return
         }
 
-        // 维持现有方向语义：正向输入翻到上一页，负向输入翻到下一页
-        let targetPage = direction > 0 ? currentPage - 1 : currentPage + 1
+        // Keep existing CA direction semantics by default; optional override flips wheel-only paging.
+        let targetPage = effectiveDirection > 0 ? currentPage - 1 : currentPage + 1
         wheelLastFlipAt = now
         wheelAccumulatedDelta = 0
         navigateToPage(targetPage, animated: true)
@@ -362,9 +363,15 @@ extension CAGridView {
 
             // 检查是否在同一个 item 上释放
             if let (item, index) = itemAt(location), index == idx {
-                // 延迟一点点再触发，让动画效果更明显
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
-                    self?.onItemClicked?(item, index)
+                if isBatchSelectionMode {
+                    if case .app(let app) = item {
+                        toggleBatchSelection(forAppPath: app.url.path)
+                    }
+                } else {
+                    // 延迟一点点再触发，让动画效果更明显
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+                        self?.onItemClicked?(item, index)
+                    }
                 }
             }
         }
@@ -385,12 +392,25 @@ extension CAGridView {
 
     func startDragging(item: LaunchpadItem, index: Int, at point: CGPoint) {
         guard !isLayoutLocked else { return }
-        // Allow dragging apps and folders
-        switch item {
-        case .app, .folder:
-            break
-        case .empty, .missingApp:
-            return
+        if isBatchSelectionMode {
+            guard case .app(let app) = item else { return }
+            let dragPath = app.url.path
+            let orderedBatch = orderedBatchDragPaths(leadingAppPath: dragPath)
+            guard !orderedBatch.isEmpty else { return }
+            batchDraggingAppPathsOrdered = orderedBatch
+            batchHiddenCompanionIndices = orderedBatch
+                .compactMap { globalIndex(forAppPath: $0) }
+                .filter { $0 != index }
+        } else {
+            // Allow dragging apps and folders in normal mode.
+            switch item {
+            case .app, .folder:
+                break
+            case .empty, .missingApp:
+                return
+            }
+            batchDraggingAppPathsOrdered.removeAll()
+            batchHiddenCompanionIndices.removeAll()
         }
 
         isDraggingItem = true
@@ -410,9 +430,19 @@ extension CAGridView {
         if pageIndex < iconLayers.count, localIndex < iconLayers[pageIndex].count {
             iconLayers[pageIndex][localIndex].opacity = 0
         }
+        if !batchHiddenCompanionIndices.isEmpty {
+            for companionIndex in batchHiddenCompanionIndices {
+                setOpacity(0, forGlobalIndex: companionIndex)
+            }
+        }
 
         // 创建拖拽图层
         createDraggingLayer(for: item, at: point)
+
+        if isBatchDragging {
+            pendingHoverIndex = gridPositionAt(point)
+            applyIconPositionUpdate()
+        }
 
         // print("🎯 [CAGrid] Started dragging: \(item.name) at index \(index)")
     }
@@ -476,8 +506,39 @@ extension CAGridView {
         }
 
         container.addSublayer(iconLayer)
+
+        if case .app = item, batchDraggingAppPathsOrdered.count > 1 {
+            addBatchDragCountBadge(to: container, count: batchDraggingAppPathsOrdered.count)
+        }
+
         containerLayer.addSublayer(container)
         draggingLayer = container
+    }
+
+    func addBatchDragCountBadge(to container: CALayer, count: Int) {
+        let badgeSize: CGFloat = 22
+        let badge = CALayer()
+        badge.name = "batchDragCountBadge"
+        badge.frame = CGRect(x: container.bounds.width - badgeSize * 0.9,
+                             y: container.bounds.height - badgeSize * 0.95,
+                             width: badgeSize,
+                             height: badgeSize)
+        badge.cornerRadius = badgeSize * 0.5
+        badge.backgroundColor = NSColor.systemBlue.cgColor
+        badge.borderColor = NSColor.white.withAlphaComponent(0.85).cgColor
+        badge.borderWidth = 1
+        badge.zPosition = 40
+
+        let text = CATextLayer()
+        text.string = "\(count)"
+        text.alignmentMode = .center
+        text.font = NSFont.systemFont(ofSize: 11, weight: .bold)
+        text.fontSize = 11
+        text.foregroundColor = NSColor.white.cgColor
+        text.contentsScale = NSScreen.main?.backingScaleFactor ?? 2
+        text.frame = CGRect(x: 0, y: 4, width: badgeSize, height: badgeSize - 6)
+        badge.addSublayer(text)
+        container.addSublayer(badge)
     }
 
     func updateDragging(at point: CGPoint) {
@@ -496,6 +557,17 @@ extension CAGridView {
 
         let dragPage = draggingIndex.map { $0 / itemsPerPage }
         let isCrossPage = dragPage != nil && dragPage != currentPage
+
+        if isBatchDragging {
+            if let hoverIndex = gridPositionAt(point), hoverIndex != draggingIndex {
+                clearDropTargetHighlight()
+                updateIconPositionsForDrag(hoverIndex: hoverIndex)
+            } else {
+                clearDropTargetHighlight()
+                updateIconPositionsForDrag(hoverIndex: nil)
+            }
+            return
+        }
 
         if let hoverIndex = gridPositionAt(point), hoverIndex != draggingIndex {
             if hoverIndex < items.count {
@@ -558,8 +630,8 @@ extension CAGridView {
         
         let hoverIndex = pendingHoverIndex
         
-        // Skip if already at this position
-        if hoverIndex == currentHoverIndex { return }
+        // Batch mode always recomputes compaction so selected gaps are closed immediately.
+        if !isBatchDragging, hoverIndex == currentHoverIndex { return }
         currentHoverIndex = hoverIndex
         
         // Get current page icons only
@@ -570,12 +642,9 @@ extension CAGridView {
 
         ensureOriginalPositionsForCurrentPage(pageLayers: pageLayers, pageStart: pageStart)
         
-        // Store original positions if not stored
-        if originalIconPositions.isEmpty {
-            for (localIndex, layer) in pageLayers.enumerated() {
-                let globalIndex = pageStart + localIndex
-                originalIconPositions[globalIndex] = layer.position
-            }
+        if isBatchDragging {
+            applyBatchCompactedPositions(pageLayers: pageLayers, pageStart: pageStart, dragIndex: dragIndex)
+            return
         }
         
         // Calculate positions with item shifted - smooth spring-like animation
@@ -633,6 +702,43 @@ extension CAGridView {
             layer.position = targetPos
         }
         
+        CATransaction.commit()
+    }
+
+    func applyBatchCompactedPositions(pageLayers: [CALayer], pageStart: Int, dragIndex: Int) {
+        let pageEnd = pageStart + pageLayers.count
+        let removedIndices = Set(batchHiddenCompanionIndices + [dragIndex]).filter { $0 >= pageStart && $0 < pageEnd }
+        let removedLocals = Set(removedIndices.map { $0 - pageStart })
+
+        var nonEmptyLocals: [Int] = []
+        var emptyLocals: [Int] = []
+        for localIndex in 0..<pageLayers.count {
+            guard !removedLocals.contains(localIndex) else { continue }
+            let globalIndex = pageStart + localIndex
+            if globalIndex < items.count, case .empty = items[globalIndex] {
+                emptyLocals.append(localIndex)
+            } else {
+                nonEmptyLocals.append(localIndex)
+            }
+        }
+        let compactedLocals = nonEmptyLocals + emptyLocals
+
+        CATransaction.begin()
+        CATransaction.setAnimationDuration(0.25)
+        CATransaction.setAnimationTimingFunction(CAMediaTimingFunction(controlPoints: 0.25, 0.9, 0.35, 1.0))
+
+        for (targetLocalIndex, sourceLocalIndex) in compactedLocals.enumerated() {
+            let layer = pageLayers[sourceLocalIndex]
+            let targetGlobalIndex = pageStart + targetLocalIndex
+            let targetPosition = originalIconPositions[targetGlobalIndex] ?? gridCenterForGlobalIndex(targetGlobalIndex)
+            layer.position = targetPosition
+            layer.opacity = 1
+        }
+
+        for removedLocalIndex in removedLocals {
+            pageLayers[removedLocalIndex].opacity = 0
+        }
+
         CATransaction.commit()
     }
 
@@ -1108,37 +1214,48 @@ extension CAGridView {
         // Track if we're doing a reorder (so we don't reset positions unnecessarily)
         var didReorder = false
 
-        // 检查是否拖到另一个item上
-        if let (targetItem, targetIndex) = itemAt(point), targetIndex != dragIndex {
-            // print("🎯 [CAGrid] Dropped on item: \(targetItem.name) at index \(targetIndex)")
-            // 拖拽到另一个 item 上
-            if case .app(let dragApp) = dragItem {
-                switch targetItem {
-                case .app(let targetApp):
-                    // 两个应用 -> 创建文件夹
-                    // print("📁 [CAGrid] Creating folder: \(dragApp.name) + \(targetApp.name)")
-                    onCreateFolder?(dragApp, targetApp, targetIndex)
-                    cancelDragging()
-                    return
-                case .folder(let folder):
-                    // 拖到文件夹 -> 移入文件夹
-                    // print("📂 [CAGrid] Moving to folder: \(dragApp.name) -> \(folder.name)")
-                    onMoveToFolder?(dragApp, folder)
-                    cancelDragging()
-                    return
-                case .empty, .missingApp:
-                    // 空白格子或丢失的应用 -> 当作重排序处理
-                    // print("🔄 [CAGrid] Dropped on empty/missing, reordering: \(dragIndex) -> \(targetIndex)")
-                    onReorderItems?(dragIndex, targetIndex)
+        if isBatchDragging {
+            if let insertIndex = savedHoverIndex ?? targetPosition {
+                let clampedIndex = max(0, min(insertIndex, items.count))
+                let singleDragNoop = batchDraggingAppPathsOrdered.count == 1 && clampedIndex == dragIndex
+                if !singleDragNoop {
+                    onReorderAppBatch?(batchDraggingAppPathsOrdered, clampedIndex)
                     didReorder = true
                 }
             }
-        }
+        } else {
+            // 检查是否拖到另一个item上
+            if let (targetItem, targetIndex) = itemAt(point), targetIndex != dragIndex {
+                // print("🎯 [CAGrid] Dropped on item: \(targetItem.name) at index \(targetIndex)")
+                // 拖拽到另一个 item 上
+                if case .app(let dragApp) = dragItem {
+                    switch targetItem {
+                    case .app(let targetApp):
+                        // 两个应用 -> 创建文件夹
+                        // print("📁 [CAGrid] Creating folder: \(dragApp.name) + \(targetApp.name)")
+                        onCreateFolder?(dragApp, targetApp, targetIndex)
+                        cancelDragging()
+                        return
+                    case .folder(let folder):
+                        // 拖到文件夹 -> 移入文件夹
+                        // print("📂 [CAGrid] Moving to folder: \(dragApp.name) -> \(folder.name)")
+                        onMoveToFolder?(dragApp, folder)
+                        cancelDragging()
+                        return
+                    case .empty, .missingApp:
+                        // 空白格子或丢失的应用 -> 当作重排序处理
+                        // print("🔄 [CAGrid] Dropped on empty/missing, reordering: \(dragIndex) -> \(targetIndex)")
+                        onReorderItems?(dragIndex, targetIndex)
+                        didReorder = true
+                    }
+                }
+            }
 
-        // Reorder to empty area - use saved hover position or calculated position
-        if !didReorder, let insertIndex = savedHoverIndex ?? targetPosition, insertIndex != dragIndex {
-            onReorderItems?(dragIndex, insertIndex)
-            didReorder = true
+            // Reorder to empty area - use saved hover position or calculated position
+            if !didReorder, let insertIndex = savedHoverIndex ?? targetPosition, insertIndex != dragIndex {
+                onReorderItems?(dragIndex, insertIndex)
+                didReorder = true
+            }
         }
 
         // If we did a reorder, data will update and rebuild layers
@@ -1176,6 +1293,10 @@ extension CAGridView {
                         self.iconLayers[pageIndex][localIndex].opacity = 1.0
                     }
                 }
+                self.restoreBatchHiddenCompanionLayers()
+                if self.isBatchSelectionMode {
+                    self.disableBatchSelectionMode()
+                }
                 self.forceSyncPageTransformIfNeeded()
             }
         } else {
@@ -1198,6 +1319,7 @@ extension CAGridView {
         draggingIndex = nil
         draggingItem = nil
         dropTargetIndex = nil
+        restoreBatchHiddenCompanionLayers()
         hardSnapToCurrentPage()
         logIfMismatch("cancelDragging")
     }

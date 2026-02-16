@@ -909,6 +909,49 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
                 .font(.footnote)
                 .foregroundStyle(.secondary)
 
+            updateControlButton(
+                title: appStore.localized(.developmentForceOnboardingButton),
+                systemImage: "rectangle.stack.badge.play",
+                isPrimary: true
+            ) {
+                appStore.forceShowOnboarding()
+            }
+            .disabled(!appStore.isFullscreenMode)
+            .opacity(appStore.isFullscreenMode ? 1 : 0.45)
+            Text(appStore.localized(.developmentForceOnboardingHint))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Screenshot background")
+                    .font(.headline)
+
+                updateControlButton(
+                    title: "Pure White",
+                    systemImage: "sun.max.fill"
+                ) {
+                    appStore.developmentBackgroundOverride = .solidWhite
+                }
+
+                updateControlButton(
+                    title: "Pure Black",
+                    systemImage: "moon.fill"
+                ) {
+                    appStore.developmentBackgroundOverride = .solidBlack
+                }
+
+                updateControlButton(
+                    title: "Clear",
+                    systemImage: "arrow.counterclockwise"
+                ) {
+                    appStore.developmentBackgroundOverride = .none
+                }
+
+                Text("Development-only preview override, not persisted.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
             HStack(spacing: 6) {
                 Image(systemName: "memorychip")
                 Text(currentMemoryUsageString())
@@ -3220,6 +3263,14 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
                 .opacity(appStore.useCAGridRenderer ? 0.5 : 1)
 
                 HStack {
+                    Text(appStore.localized(.reverseWheelPagingTitle))
+                    Spacer()
+                    Toggle("", isOn: $appStore.reverseWheelPagingDirection)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                }
+
+                HStack {
                     Text(appStore.localized(.hideDockOption))
                     Spacer()
                     Toggle("", isOn: $appStore.hideDock)
@@ -3767,6 +3818,7 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
                     keys.insert("enableAnimations")
                     keys.insert("useLocalizedThirdPartyTitles")
                     keys.insert("enableDropPrediction")
+                    keys.insert(AppStore.reverseWheelPagingKey)
                     keys.insert(AppStore.rememberPageKey)
                     keys.insert(AppStore.rememberedPageIndexKey)
                     keys.insert("iconScale")

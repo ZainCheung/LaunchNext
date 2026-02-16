@@ -109,6 +109,20 @@ extension CAGridView {
             hideItem.target = self
             menu.addItem(hideItem)
 
+            if allowsBatchSelectionMode {
+                menu.addItem(NSMenuItem.separator())
+                let batchMenuTitle = isBatchSelectionMode ? finishBatchSelectionMenuTitle : batchSelectAppsMenuTitle
+                let batchMenuAction = isBatchSelectionMode ? #selector(handleFinishBatchSelectionFromContextMenu(_:)) : #selector(handleStartBatchSelectionFromContextMenu(_:))
+                let batchItem = NSMenuItem(
+                    title: batchMenuTitle,
+                    action: batchMenuAction,
+                    keyEquivalent: ""
+                )
+                batchItem.image = NSImage(systemSymbolName: isBatchSelectionMode ? "checkmark.circle" : "checklist", accessibilityDescription: nil)
+                batchItem.target = self
+                menu.addItem(batchItem)
+            }
+
             if canUseConfiguredUninstallTool {
                 menu.addItem(NSMenuItem.separator())
                 let uninstallItem = NSMenuItem(
@@ -166,6 +180,18 @@ extension CAGridView {
     @objc private func handleUninstallWithToolFromContextMenu(_ sender: NSMenuItem) {
         guard let app = contextMenuTargetApp else { return }
         onUninstallWithTool?(app)
+        contextMenuTargetApp = nil
+        contextMenuTargetFolder = nil
+    }
+
+    @objc private func handleStartBatchSelectionFromContextMenu(_ sender: NSMenuItem) {
+        enableBatchSelectionMode()
+        contextMenuTargetApp = nil
+        contextMenuTargetFolder = nil
+    }
+
+    @objc private func handleFinishBatchSelectionFromContextMenu(_ sender: NSMenuItem) {
+        disableBatchSelectionMode()
         contextMenuTargetApp = nil
         contextMenuTargetFolder = nil
     }

@@ -142,6 +142,25 @@ final class AppStore: ObservableObject {
         }
     }
 
+    enum DevelopmentBackgroundOverride: String, CaseIterable, Identifiable {
+        case none
+        case solidWhite
+        case solidBlack
+
+        var id: String { rawValue }
+
+        var color: Color? {
+            switch self {
+            case .none:
+                return nil
+            case .solidWhite:
+                return .white
+            case .solidBlack:
+                return .black
+            }
+        }
+    }
+
     enum SidebarIconPreset: String, CaseIterable, Identifiable {
         case large
         case medium
@@ -203,6 +222,7 @@ final class AppStore: ObservableObject {
     static let activePressEffectKey = "enableActivePressEffect"
     static let activePressScaleKey = "activePressScale"
     static let followScrollPagingKey = "followScrollPagingEnabled"
+    static let reverseWheelPagingKey = "reverseWheelPagingDirection"
     static let useCAGridRendererKey = "useCAGridRenderer"
     static let backgroundStyleKey = "launchpadBackgroundStyle"
     static let backgroundMaskEnabledKey = "launchpadBackgroundMaskEnabled"
@@ -222,6 +242,8 @@ final class AppStore: ObservableObject {
     private static let voiceFeedbackEnabledKey = "voiceFeedbackEnabled"
     static let folderDropZoneScaleKey = "folderDropZoneScale"
     static let pageIndicatorTopPaddingKey = "pageIndicatorTopPadding"
+    static let onboardingVersionKey = "onboardingVersionShown"
+    static let currentOnboardingVersion = 1
     // private static let aiFeatureEnabledKey = "aiFeatureEnabled"
     // private static let aiOverlayHotKeyKey = "aiOverlayHotKeyConfiguration"
 
@@ -437,6 +459,9 @@ final class AppStore: ObservableObject {
         }
     }
 
+    // Development-only override to capture flat screenshots quickly.
+    @Published var developmentBackgroundOverride: DevelopmentBackgroundOverride = .none
+
     @Published var backgroundMaskEnabled: Bool = AppStore.loadBackgroundMaskEnabled() {
         didSet {
             UserDefaults.standard.set(backgroundMaskEnabled, forKey: Self.backgroundMaskEnabledKey)
@@ -493,7 +518,26 @@ final class AppStore: ObservableObject {
         useLocalizedThirdPartyTitles = UserDefaults.standard.object(forKey: "useLocalizedThirdPartyTitles") as? Bool ?? true
         enableAnimations = UserDefaults.standard.object(forKey: "enableAnimations") as? Bool ?? true
         scrollSensitivity = UserDefaults.standard.object(forKey: "scrollSensitivity") as? Double ?? scrollSensitivity
-        useCAGridRenderer = UserDefaults.standard.object(forKey: Self.useCAGridRendererKey) as? Bool ?? false
+        reverseWheelPagingDirection = UserDefaults.standard.object(forKey: Self.reverseWheelPagingKey) as? Bool ?? false
+        useCAGridRenderer = UserDefaults.standard.object(forKey: Self.useCAGridRendererKey) as? Bool ?? useCAGridRenderer
+
+        // Keep imported appearance/input settings in sync without requiring relaunch.
+        iconScale = UserDefaults.standard.object(forKey: "iconScale") as? Double ?? iconScale
+        iconLabelFontSize = UserDefaults.standard.object(forKey: "iconLabelFontSize") as? Double ?? iconLabelFontSize
+        if let rawFontWeight = UserDefaults.standard.string(forKey: Self.iconLabelFontWeightKey),
+           let fontWeight = IconLabelFontWeightOption(rawValue: rawFontWeight) {
+            iconLabelFontWeight = fontWeight
+        }
+
+        pageIndicatorOffset = UserDefaults.standard.object(forKey: "pageIndicatorOffset") as? Double ?? pageIndicatorOffset
+        let importedTopPadding = UserDefaults.standard.object(forKey: Self.pageIndicatorTopPaddingKey) as? Double ?? pageIndicatorTopPadding
+        pageIndicatorTopPadding = Self.clampPageIndicatorTopPadding(importedTopPadding)
+        if let importedPerDisplayEnabled = UserDefaults.standard.object(forKey: Self.pageIndicatorPerDisplayEnabledKey) as? Bool {
+            pageIndicatorPerDisplayEnabled = importedPerDisplayEnabled
+        }
+        pageIndicatorOverrides = Self.loadPageIndicatorOverrides()
+
+        globalHotKey = Self.loadHotKeyConfiguration()
 
         // Apply hidden filtering immediately
         pruneHiddenAppsFromAppList()
@@ -505,6 +549,7 @@ final class AppStore: ObservableObject {
     }
     @Published var isSetting = false
     @Published var isInitialLoading = true
+    @Published var shouldShowOnboarding: Bool = false
     @Published var currentPage = 0 {
         didSet {
             if currentPage < 0 { currentPage = 0; return }
@@ -786,6 +831,13 @@ final class AppStore: ObservableObject {
         return UserDefaults.standard.bool(forKey: AppStore.followScrollPagingKey)
     }() {
         didSet { UserDefaults.standard.set(followScrollPagingEnabled, forKey: Self.followScrollPagingKey) }
+    }
+
+    @Published var reverseWheelPagingDirection: Bool = {
+        if UserDefaults.standard.object(forKey: AppStore.reverseWheelPagingKey) == nil { return false }
+        return UserDefaults.standard.bool(forKey: AppStore.reverseWheelPagingKey)
+    }() {
+        didSet { UserDefaults.standard.set(reverseWheelPagingDirection, forKey: Self.reverseWheelPagingKey) }
     }
 
     @Published var useCAGridRenderer: Bool = {
@@ -1562,7 +1614,7 @@ final class AppStore: ObservableObject {
             self.isFullscreenMode = UserDefaults.standard.bool(forKey: "isFullscreenMode")
         }
         if UserDefaults.standard.object(forKey: PerformanceMode.userDefaultsKey) == nil {
-            PerformanceMode.persist(.full)
+            PerformanceMode.persist(.lean)
         }
         let defaults = UserDefaults.standard
 
@@ -1628,6 +1680,9 @@ final class AppStore: ObservableObject {
         }
         if UserDefaults.standard.object(forKey: AppStore.followScrollPagingKey) == nil {
             UserDefaults.standard.set(false, forKey: AppStore.followScrollPagingKey)
+        }
+        if UserDefaults.standard.object(forKey: AppStore.reverseWheelPagingKey) == nil {
+            UserDefaults.standard.set(false, forKey: AppStore.reverseWheelPagingKey)
         }
         if defaults.object(forKey: Self.gameControllerMenuToggleKey) == nil {
             defaults.set(true, forKey: Self.gameControllerMenuToggleKey)
@@ -1783,6 +1838,7 @@ final class AppStore: ObservableObject {
 
     func configure(modelContext: ModelContext) {
         self.modelContext = modelContext
+        evaluateOnboardingGate()
         
         // 立即尝试加载持久化数据（如果已有数据）——不要过早设置标记，等待加载完成时设置
         if !hasAppliedOrderFromStore {
@@ -1814,6 +1870,53 @@ final class AppStore: ObservableObject {
             .store(in: &cancellables)
     }
 
+    func completeOnboarding() {
+        UserDefaults.standard.set(Self.currentOnboardingVersion, forKey: Self.onboardingVersionKey)
+        shouldShowOnboarding = false
+    }
+
+    func forceShowOnboarding() {
+        guard isFullscreenMode else { return }
+
+        if isSetting {
+            isSetting = false
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) { [weak self] in
+                guard let self else { return }
+                self.shouldShowOnboarding = false
+                self.shouldShowOnboarding = true
+            }
+            return
+        }
+
+        shouldShowOnboarding = false
+        DispatchQueue.main.async { [weak self] in
+            self?.shouldShowOnboarding = true
+        }
+    }
+
+    private func evaluateOnboardingGate() {
+        let shownVersion = UserDefaults.standard.object(forKey: Self.onboardingVersionKey) as? Int ?? 0
+        guard shownVersion < Self.currentOnboardingVersion else {
+            shouldShowOnboarding = false
+            return
+        }
+
+        if isExistingUserForOnboarding() {
+            UserDefaults.standard.set(Self.currentOnboardingVersion, forKey: Self.onboardingVersionKey)
+            shouldShowOnboarding = false
+            return
+        }
+
+        shouldShowOnboarding = true
+    }
+
+    private func isExistingUserForOnboarding() -> Bool {
+        if !hiddenAppPaths.isEmpty { return true }
+        if !customTitles.isEmpty { return true }
+        if hasPersistedOrderData() { return true }
+        return false
+    }
+
     // MARK: - Order Persistence
     func applyOrderAndFolders() {
         self.loadAllOrder()
@@ -1821,6 +1924,8 @@ final class AppStore: ObservableObject {
 
     // MARK: - Initial scan (once)
     func performInitialScanIfNeeded() {
+        guard !hasPerformedInitialScan else { return }
+
         // 先尝试加载持久化数据，避免被扫描覆盖（不提前设置标记）
         if !hasAppliedOrderFromStore {
             loadAllOrder()
@@ -2994,13 +3099,18 @@ final class AppStore: ObservableObject {
     /// 单页内自动补位：将每页的 .empty 槽位移动到该页尾部，保持非空项的相对顺序
     func compactItemsWithinPages() {
         guard !items.isEmpty else { return }
+        items = filteredItemsRemovingHidden(from: compactedItemsWithinPages(items))
+    }
+
+    private func compactedItemsWithinPages(_ source: [LaunchpadItem]) -> [LaunchpadItem] {
+        guard !source.isEmpty else { return source }
         let itemsPerPage = self.itemsPerPage // 使用计算属性
         var result: [LaunchpadItem] = []
-        result.reserveCapacity(items.count)
+        result.reserveCapacity(source.count)
         var index = 0
-        while index < items.count {
-            let end = min(index + itemsPerPage, items.count)
-            let pageSlice = Array(items[index..<end])
+        while index < source.count {
+            let end = min(index + itemsPerPage, source.count)
+            let pageSlice = Array(source[index..<end])
             var nonEmpty: [LaunchpadItem] = []
             var emptyTokens: [String] = []
             nonEmpty.reserveCapacity(pageSlice.count)
@@ -3025,10 +3135,60 @@ final class AppStore: ObservableObject {
 
             index = end
         }
-        items = filteredItemsRemovingHidden(from: result)
+        return result
     }
 
     // MARK: - 跨页拖拽：级联插入（满页则将最后一个推入下一页）
+    func moveSelectedAppsAcrossPagesWithCascade(appPathsOrdered: [String], to targetIndex: Int) {
+        guard !appPathsOrdered.isEmpty else { return }
+
+        var seenPaths = Set<String>()
+        let normalizedOrderedPaths: [String] = appPathsOrdered.compactMap { raw in
+            let normalized = standardizedFilePath(raw)
+            guard seenPaths.insert(normalized).inserted else { return nil }
+            return normalized
+        }
+        guard !normalizedOrderedPaths.isEmpty else { return }
+        let movingPathSet = Set(normalizedOrderedPaths)
+
+        var movingItemsByPath: [String: LaunchpadItem] = [:]
+        for item in items {
+            guard case .app(let app) = item else { continue }
+            let path = standardizedFilePath(app.url.path)
+            if movingPathSet.contains(path), movingItemsByPath[path] == nil {
+                movingItemsByPath[path] = .app(app)
+            }
+        }
+
+        let orderedMovingItems = normalizedOrderedPaths.compactMap { movingItemsByPath[$0] }
+        guard !orderedMovingItems.isEmpty else { return }
+
+        var result = items
+        let sourceIndexes = result.indices.filter { index in
+            guard case .app(let app) = result[index] else { return false }
+            return movingPathSet.contains(standardizedFilePath(app.url.path))
+        }
+        guard !sourceIndexes.isEmpty else { return }
+
+        for index in sourceIndexes {
+            result[index] = .empty(UUID().uuidString)
+        }
+
+        result = compactedItemsWithinPages(result)
+        var insertionIndex = max(0, min(targetIndex, result.count))
+
+        for movingItem in orderedMovingItems {
+            result = cascadeInsert(into: result, item: movingItem, at: insertionIndex)
+            insertionIndex += 1
+        }
+
+        items = filteredItemsRemovingHidden(from: result)
+        compactItemsWithinPages()
+        removeEmptyPages()
+        triggerGridRefresh()
+        saveAllOrder()
+    }
+
     func moveItemAcrossPagesWithCascade(item: LaunchpadItem, to targetIndex: Int) {
         guard items.indices.contains(targetIndex) || targetIndex == items.count else {
             return
