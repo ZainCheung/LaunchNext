@@ -224,6 +224,10 @@ final class AppStore: ObservableObject {
     static let followScrollPagingKey = "followScrollPagingEnabled"
     static let reverseWheelPagingKey = "reverseWheelPagingDirection"
     static let useCAGridRendererKey = "useCAGridRenderer"
+    static let developmentEnableCLICodeKey = "developmentEnableCLICode"
+    private static let cliShimMarker = "# LaunchNext CLI shim"
+    private static let cliPathSnippetHeader = "# >>> LaunchNext CLI >>>"
+    private static let cliPathSnippetFooter = "# <<< LaunchNext CLI <<<"
     static let backgroundStyleKey = "launchpadBackgroundStyle"
     static let backgroundMaskEnabledKey = "launchpadBackgroundMaskEnabled"
     static let backgroundMaskLightKey = "launchpadBackgroundMaskLight"
@@ -462,6 +466,20 @@ final class AppStore: ObservableObject {
     // Development-only override to capture flat screenshots quickly.
     @Published var developmentBackgroundOverride: DevelopmentBackgroundOverride = .none
 
+    @Published var developmentEnableCLICode: Bool = {
+        if UserDefaults.standard.object(forKey: AppStore.developmentEnableCLICodeKey) == nil { return false }
+        return UserDefaults.standard.bool(forKey: AppStore.developmentEnableCLICodeKey)
+    }() {
+        didSet {
+            UserDefaults.standard.set(developmentEnableCLICode, forKey: Self.developmentEnableCLICodeKey)
+            if developmentEnableCLICode && !oldValue {
+                installCLICommandIfNeeded()
+            } else if !developmentEnableCLICode && oldValue {
+                uninstallCLICommandIfNeeded()
+            }
+        }
+    }
+
     @Published var backgroundMaskEnabled: Bool = AppStore.loadBackgroundMaskEnabled() {
         didSet {
             UserDefaults.standard.set(backgroundMaskEnabled, forKey: Self.backgroundMaskEnabledKey)
@@ -520,6 +538,7 @@ final class AppStore: ObservableObject {
         scrollSensitivity = UserDefaults.standard.object(forKey: "scrollSensitivity") as? Double ?? scrollSensitivity
         reverseWheelPagingDirection = UserDefaults.standard.object(forKey: Self.reverseWheelPagingKey) as? Bool ?? false
         useCAGridRenderer = UserDefaults.standard.object(forKey: Self.useCAGridRendererKey) as? Bool ?? useCAGridRenderer
+        developmentEnableCLICode = UserDefaults.standard.object(forKey: Self.developmentEnableCLICodeKey) as? Bool ?? false
 
         // Keep imported appearance/input settings in sync without requiring relaunch.
         iconScale = UserDefaults.standard.object(forKey: "iconScale") as? Double ?? iconScale
@@ -1690,6 +1709,9 @@ final class AppStore: ObservableObject {
         if defaults.object(forKey: Self.useCAGridRendererKey) == nil {
             defaults.set(true, forKey: Self.useCAGridRendererKey)
         }
+        if defaults.object(forKey: Self.developmentEnableCLICodeKey) == nil {
+            defaults.set(false, forKey: Self.developmentEnableCLICodeKey)
+        }
         if defaults.object(forKey: Self.backgroundMaskEnabledKey) == nil {
             defaults.set(false, forKey: Self.backgroundMaskEnabledKey)
         }
@@ -1748,6 +1770,12 @@ final class AppStore: ObservableObject {
 
         searchQuery = searchText
 
+        if developmentEnableCLICode {
+            installCLICommandIfNeeded()
+        } else {
+            uninstallCLICommandIfNeeded()
+        }
+
         scheduleAutomaticUpdateCheck()
 
         self.rememberLastPage = shouldRememberPage
@@ -1763,6 +1791,194 @@ final class AppStore: ObservableObject {
         loginItemUpdateInProgress = true
         isStartOnLogin = SMAppService.mainApp.status == .enabled
         loginItemUpdateInProgress = false
+    }
+
+    private func installCLICommandIfNeeded() {
+        guard let executablePath = Bundle.main.executableURL?.path else { return }
+        for path in cliCommandTargets() {
+            if installCLIShim(at: path, executablePath: executablePath) {
+                let directory = (path as NSString).deletingLastPathComponent
+                ensureZProfilePathIncludes(directory: directory)
+                return
+            }
+        }
+    }
+
+    @discardableResult
+    func removeInstalledCLICommand() -> Bool {
+        uninstallCLICommandIfNeeded()
+    }
+
+    private func cliCommandTargets() -> [String] {
+        let homePath = FileManager.default.homeDirectoryForCurrentUser.path
+        return [
+            "/opt/homebrew/bin/launchnext",
+            "/usr/local/bin/launchnext",
+            "\(homePath)/.local/bin/launchnext",
+            "\(homePath)/bin/launchnext"
+        ]
+    }
+
+    private func installCLIShim(at shimPath: String, executablePath: String) -> Bool {
+        let fileManager = FileManager.default
+        let directoryPath = (shimPath as NSString).deletingLastPathComponent
+
+        if !fileManager.fileExists(atPath: directoryPath) {
+            do {
+                try fileManager.createDirectory(atPath: directoryPath, withIntermediateDirectories: true)
+            } catch {
+                return false
+            }
+        }
+
+        guard fileManager.isWritableFile(atPath: directoryPath) else {
+            return false
+        }
+
+        if fileManager.fileExists(atPath: shimPath) {
+            if let destination = try? fileManager.destinationOfSymbolicLink(atPath: shimPath),
+               destination == executablePath {
+                return true
+            }
+            if let existing = try? String(contentsOfFile: shimPath, encoding: .utf8),
+               existing.contains(Self.cliShimMarker) {
+                // Managed shim, safe to replace.
+            } else {
+                return false
+            }
+        }
+
+        let escapedExecutable = executablePath.replacingOccurrences(of: "\"", with: "\\\"")
+        let script = """
+        #!/bin/zsh
+        \(Self.cliShimMarker)
+        
+        if [[ "$1" == "--help" || "$1" == "-h" || "$1" == "help" ]]; then
+          cat <<'EOF'
+        LaunchNext CLI
+        
+        Usage:
+          launchnext --help
+          launchnext --gui
+          launchnext --tui
+          launchnext --cli help
+          launchnext --cli list
+          launchnext --cli snapshot
+          launchnext --cli search --query "safari"
+          launchnext --cli move --source normal-app --path "/Applications/Thaw.app" --to folder-append --target-folder-id <folder-id>
+        
+        Notes:
+          - Keep `--cli --help` and `--cli help` for full in-app CLI help.
+          - LaunchNext GUI must be running for list/snapshot/search/move.
+          - "Command line interface" must be ON in General settings.
+        EOF
+          exit 0
+        fi
+        
+        exec "\(escapedExecutable)" "$@"
+        """
+
+        do {
+            try script.write(toFile: shimPath, atomically: true, encoding: .utf8)
+            try fileManager.setAttributes([.posixPermissions: NSNumber(value: Int(0o755))], ofItemAtPath: shimPath)
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    @discardableResult
+    private func uninstallCLICommandIfNeeded() -> Bool {
+        var removedAny = false
+        for path in cliCommandTargets() {
+            let directory = (path as NSString).deletingLastPathComponent
+            if uninstallCLIShim(at: path) { removedAny = true }
+            if removeCLIPathSnippetFromZProfile(directory: directory) { removedAny = true }
+        }
+        return removedAny
+    }
+
+    private func uninstallCLIShim(at shimPath: String) -> Bool {
+        let fileManager = FileManager.default
+        guard fileManager.fileExists(atPath: shimPath) else { return false }
+
+        let isManagedShim: Bool = {
+            if let existing = try? String(contentsOfFile: shimPath, encoding: .utf8),
+               existing.contains(Self.cliShimMarker) {
+                return true
+            }
+            if let destination = try? fileManager.destinationOfSymbolicLink(atPath: shimPath),
+               destination.contains("/LaunchNext.app/Contents/MacOS/LaunchNext") {
+                return true
+            }
+            return false
+        }()
+
+        guard isManagedShim else { return false }
+        do {
+            try fileManager.removeItem(atPath: shimPath)
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    private func ensureZProfilePathIncludes(directory: String) {
+        guard directory.hasPrefix(FileManager.default.homeDirectoryForCurrentUser.path) else { return }
+
+        let zprofileURL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".zprofile")
+        let snippet = cliPathSnippet(directory: directory)
+
+        if let existing = try? String(contentsOf: zprofileURL, encoding: .utf8) {
+            if existing.contains(":\(directory):") || existing.contains("export PATH=\"\(directory):$PATH\"") {
+                return
+            }
+            try? (existing + snippet).write(to: zprofileURL, atomically: true, encoding: .utf8)
+        } else {
+            try? snippet.write(to: zprofileURL, atomically: true, encoding: .utf8)
+        }
+    }
+
+    @discardableResult
+    private func removeCLIPathSnippetFromZProfile(directory: String) -> Bool {
+        let homePath = FileManager.default.homeDirectoryForCurrentUser.path
+        guard directory.hasPrefix(homePath) else { return false }
+
+        let zprofileURL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".zprofile")
+        guard let existing = try? String(contentsOf: zprofileURL, encoding: .utf8) else { return false }
+
+        var updated = existing
+        updated = updated.replacingOccurrences(of: cliPathSnippet(directory: directory), with: "")
+        updated = updated.replacingOccurrences(of: legacyCLIPathSnippet(directory: directory), with: "")
+
+        guard updated != existing else { return false }
+        do {
+            try updated.write(to: zprofileURL, atomically: true, encoding: .utf8)
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    private func cliPathSnippet(directory: String) -> String {
+        """
+        
+        \(Self.cliPathSnippetHeader)
+        if [[ ":$PATH:" != *":\(directory):"* ]]; then
+          export PATH="\(directory):$PATH"
+        fi
+        \(Self.cliPathSnippetFooter)
+        """
+    }
+
+    private func legacyCLIPathSnippet(directory: String) -> String {
+        """
+        
+        # LaunchNext CLI
+        if [[ ":$PATH:" != *":\(directory):"* ]]; then
+          export PATH="\(directory):$PATH"
+        fi
+        """
     }
 
     private static func loadCustomTitles() -> [String: String] {

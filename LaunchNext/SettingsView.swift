@@ -52,6 +52,11 @@ struct SettingsView: View {
     @State private var hasAllAppEntries:Bool = false
     @State private var hasAllAppEntriesSearchResult: Bool = false
     @State private var showOnlyEditedTittleApps: Bool = true
+    @State private var showCLIInfoPopover = false
+    @State private var showCLIRemoveInfoPopover = false
+    @State private var showCLIFullPathCommand = false
+    @State private var copiedCLICommand: String? = nil
+    @State private var cliCommandActionMessage: String? = nil
 
     // Sidebar sizing presets
     private var sidebarIconFrame: CGFloat {
@@ -2465,14 +2470,27 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
 
     private var loginLayoutCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text(appStore.localized(.launchAtLoginTitle))
-                    .font(.subheadline.weight(.semibold))
-                Spacer()
-                Toggle("", isOn: $appStore.isStartOnLogin)
-                    .labelsHidden()
-                    .toggleStyle(.switch)
-                    .disabled(!appStore.canConfigureStartOnLogin)
+            HStack(alignment: .center, spacing: 24) {
+                HStack {
+                    Text(appStore.localized(.launchAtLoginTitle))
+                        .font(.subheadline.weight(.semibold))
+                    Spacer()
+                    Toggle("", isOn: $appStore.isStartOnLogin)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                        .disabled(!appStore.canConfigureStartOnLogin)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                HStack {
+                    Text(appStore.localized(.showQuickRefreshButton))
+                        .font(.subheadline.weight(.semibold))
+                    Spacer()
+                    Toggle("", isOn: $appStore.showQuickRefreshButton)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
 
             Divider()
@@ -2489,10 +2507,98 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
                 HStack {
-                    Text(appStore.localized(.showQuickRefreshButton))
+                    Text(appStore.localized(.developmentEnableCLICodeTitle))
                         .font(.subheadline.weight(.semibold))
+                    Button {
+                        if !showCLIInfoPopover {
+                            copiedCLICommand = nil
+                            cliCommandActionMessage = nil
+                            showCLIRemoveInfoPopover = false
+                            showCLIFullPathCommand = false
+                        }
+                        showCLIInfoPopover.toggle()
+                    } label: {
+                        Image(systemName: "info.circle")
+                            .font(.subheadline.weight(.regular))
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .popover(isPresented: $showCLIInfoPopover, arrowEdge: .top) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(appStore.localized(.commandLineInterfaceHelpTitle))
+                                .font(.headline)
+                            Text(appStore.localized(.commandLineInterfaceHelpBody))
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                            Text(appStore.localized(.commandLineInterfaceAgentHint))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                            Divider()
+                            cliCommandRow("LaunchNext --cli help")
+                            cliCommandRow("LaunchNext --tui")
+                            DisclosureGroup(
+                                isExpanded: $showCLIFullPathCommand,
+                                content: {
+                                    cliCommandRow("/Applications/LaunchNext.app/Contents/MacOS/LaunchNext --tui")
+                                        .padding(.top, 4)
+                                },
+                                label: {
+                                    Text(appStore.localized(.commandLineInterfaceShowFullPathCommand))
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            )
+                            Divider()
+                            HStack(spacing: 8) {
+                                Button(role: .destructive) {
+                                    if appStore.developmentEnableCLICode {
+                                        appStore.developmentEnableCLICode = false
+                                        cliCommandActionMessage = appStore.localized(.commandLineInterfaceRemoveCommandDone)
+                                    } else {
+                                        let removed = appStore.removeInstalledCLICommand()
+                                        cliCommandActionMessage = removed
+                                            ? appStore.localized(.commandLineInterfaceRemoveCommandDone)
+                                            : appStore.localized(.commandLineInterfaceRemoveCommandMissing)
+                                    }
+                                } label: {
+                                    Label(appStore.localized(.commandLineInterfaceRemoveCommandButton), systemImage: "trash")
+                                }
+                                .buttonStyle(.bordered)
+
+                                Button {
+                                    showCLIRemoveInfoPopover.toggle()
+                                } label: {
+                                    Image(systemName: "info.circle")
+                                        .foregroundStyle(.secondary)
+                                }
+                                .buttonStyle(.plain)
+                                .popover(isPresented: $showCLIRemoveInfoPopover, arrowEdge: .bottom) {
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        Text(appStore.localized(.commandLineInterfaceRemoveCommandInfoTitle))
+                                            .font(.headline)
+                                        Text(appStore.localized(.commandLineInterfaceRemoveCommandInfoBody))
+                                            .font(.footnote)
+                                            .foregroundStyle(.secondary)
+                                            .fixedSize(horizontal: false, vertical: true)
+                                            .textSelection(.enabled)
+                                    }
+                                    .padding(12)
+                                    .frame(width: 390, alignment: .leading)
+                                }
+                            }
+                            if let cliCommandActionMessage {
+                                Text(cliCommandActionMessage)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .padding(12)
+                        .frame(width: 360, alignment: .leading)
+                    }
                     Spacer()
-                    Toggle("", isOn: $appStore.showQuickRefreshButton)
+                    Toggle("", isOn: $appStore.developmentEnableCLICode)
                         .labelsHidden()
                         .toggleStyle(.switch)
                 }
@@ -2554,6 +2660,38 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(Color(nsColor: .windowBackgroundColor))
         )
+    }
+
+    @ViewBuilder
+    private func cliCommandRow(_ command: String) -> some View {
+        HStack(spacing: 8) {
+            Text(command)
+                .font(.system(size: 12, weight: .regular, design: .monospaced))
+                .lineLimit(2)
+                .truncationMode(.middle)
+                .textSelection(.enabled)
+            Spacer(minLength: 6)
+            Button {
+                copyCLICommand(command)
+            } label: {
+                Image(systemName: copiedCLICommand == command ? "checkmark.circle.fill" : "doc.on.doc")
+                    .foregroundStyle(copiedCLICommand == command ? Color.green : Color.secondary)
+            }
+            .buttonStyle(.plain)
+            .help(appStore.localized(.backupCleanupCopyButton))
+        }
+    }
+
+    private func copyCLICommand(_ command: String) {
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(command, forType: .string)
+        copiedCLICommand = command
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+            if copiedCLICommand == command {
+                copiedCLICommand = nil
+            }
+        }
     }
 
     private var dataManagementCard: some View {

@@ -232,6 +232,17 @@ enum LocalizationKey: String {
     case backupDeleteSingleMessage
     case developmentPlaceholderTitle
     case developmentPlaceholderSubtitle
+    case developmentEnableCLICodeTitle
+    case developmentEnableCLICodeHint
+    case commandLineInterfaceHelpTitle
+    case commandLineInterfaceHelpBody
+    case commandLineInterfaceShowFullPathCommand
+    case commandLineInterfaceAgentHint
+    case commandLineInterfaceRemoveCommandButton
+    case commandLineInterfaceRemoveCommandDone
+    case commandLineInterfaceRemoveCommandMissing
+    case commandLineInterfaceRemoveCommandInfoTitle
+    case commandLineInterfaceRemoveCommandInfoBody
     case developmentForceOnboardingButton
     case developmentForceOnboardingHint
     // case aiSectionComingSoonTitle
@@ -2427,6 +2438,17 @@ final class LocalizationManager {
             .backupDeleteSingleMessage: "This will permanently remove the selected backup.",
             .developmentPlaceholderTitle: "Development playground",
             .developmentPlaceholderSubtitle: "Reserved for future tools and experimental features.",
+            .developmentEnableCLICodeTitle: "Command line interface",
+            .developmentEnableCLICodeHint: "When off, terminal CLI/TUI access is blocked. Keep this off unless you are actively testing.",
+            .commandLineInterfaceHelpTitle: "Command line interface",
+            .commandLineInterfaceHelpBody: "Turning this on writes the `launchnext` name into your shell path. Turning it off removes it.\nCLI: LaunchNext --cli help\nTUI: LaunchNext --tui",
+            .commandLineInterfaceShowFullPathCommand: "Show full executable path command",
+            .commandLineInterfaceAgentHint: "This feature is mainly for Agent workflows.",
+            .commandLineInterfaceRemoveCommandButton: "Remove injected name",
+            .commandLineInterfaceRemoveCommandDone: "Injected name removed.",
+            .commandLineInterfaceRemoveCommandMissing: "No managed injected name found.",
+            .commandLineInterfaceRemoveCommandInfoTitle: "What this runs",
+            .commandLineInterfaceRemoveCommandInfoBody: "This button removes only managed LaunchNext CLI shims (not unrelated files):\nrm /opt/homebrew/bin/launchnext\nrm /usr/local/bin/launchnext\nrm ~/.local/bin/launchnext\nrm ~/bin/launchnext\nThen it removes the LaunchNext PATH snippet from ~/.zprofile.",
             .developmentForceOnboardingButton: "Force show onboarding",
             .developmentForceOnboardingHint: "Classic Launchpad (Fullscreen) only. Close Settings and show onboarding immediately for testing.",
             // .aiSectionComingSoonTitle: "AI (Coming Soon)",
@@ -2603,6 +2625,17 @@ final class LocalizationManager {
             .backupDeleteSingleMessage: "将永久删除所选备份。",
             .developmentPlaceholderTitle: "开发功能预留",
             .developmentPlaceholderSubtitle: "未来将用于调试工具或实验功能。",
+            .developmentEnableCLICodeTitle: "命令行界面",
+            .developmentEnableCLICodeHint: "关闭后将阻止终端 CLI/TUI 访问。仅在开发测试时开启。",
+            .commandLineInterfaceHelpTitle: "命令行界面",
+            .commandLineInterfaceHelpBody: "开启后会向终端环境写入 launchnext 的名字；关闭时会自动移除。\nCLI：LaunchNext --cli help\nTUI：LaunchNext --tui",
+            .commandLineInterfaceShowFullPathCommand: "显示完整可执行路径命令",
+            .commandLineInterfaceAgentHint: "这个功能主要是给 Agent 用的。",
+            .commandLineInterfaceRemoveCommandButton: "移除已写入名字",
+            .commandLineInterfaceRemoveCommandDone: "已移除已写入名字。",
+            .commandLineInterfaceRemoveCommandMissing: "未找到受管控的已写入名字。",
+            .commandLineInterfaceRemoveCommandInfoTitle: "这个按钮会执行什么",
+            .commandLineInterfaceRemoveCommandInfoBody: "该按钮只会删除受管控的 LaunchNext CLI shim（不会删无关文件）：\nrm /opt/homebrew/bin/launchnext\nrm /usr/local/bin/launchnext\nrm ~/.local/bin/launchnext\nrm ~/bin/launchnext\n然后会从 ~/.zprofile 里移除 LaunchNext 的 PATH 片段。",
             .developmentForceOnboardingButton: "强制显示引导",
             .developmentForceOnboardingHint: "仅支持经典 Launchpad（全屏）模式。用于测试：会先关闭设置，再立即弹出 onboarding。",
             // .aiSectionComingSoonTitle: "AI（即将上线）",
@@ -4191,7 +4224,17 @@ final class LocalizationManager {
             .aboutInfoDisplayTitle: "ディスプレイ",
             .aboutInfoUnknownChip: "不明なチップ",
             .aboutInfoUnknownDisplay: "不明",
-            .aboutInfoDisplayGeneric: "ディスプレイ"
+            .aboutInfoDisplayGeneric: "ディスプレイ",
+            .developmentEnableCLICodeTitle: "コマンドラインインターフェース",
+            .commandLineInterfaceHelpTitle: "コマンドラインインターフェース",
+            .commandLineInterfaceHelpBody: "有効にすると `launchnext` の名前をシェルの PATH に書き込み、無効にすると削除します。\nCLI: LaunchNext --cli help\nTUI: LaunchNext --tui",
+            .commandLineInterfaceShowFullPathCommand: "完全な実行パスのコマンドを表示",
+            .commandLineInterfaceAgentHint: "この機能は主に Agent 用です。",
+            .commandLineInterfaceRemoveCommandButton: "書き込んだ名前を削除",
+            .commandLineInterfaceRemoveCommandDone: "書き込んだ名前を削除しました。",
+            .commandLineInterfaceRemoveCommandMissing: "管理対象の書き込み済み名前が見つかりません。",
+            .commandLineInterfaceRemoveCommandInfoTitle: "このボタンの処理内容",
+            .commandLineInterfaceRemoveCommandInfoBody: "このボタンは管理対象の LaunchNext CLI shim だけを削除します（無関係なファイルは削除しません）：\nrm /opt/homebrew/bin/launchnext\nrm /usr/local/bin/launchnext\nrm ~/.local/bin/launchnext\nrm ~/bin/launchnext\nその後、~/.zprofile から LaunchNext の PATH 断片を削除します。"
         ]) { _, new in new }
 
         builder[.korean]?.merge([
@@ -4241,7 +4284,17 @@ final class LocalizationManager {
             .aboutInfoDisplayTitle: "디스플레이",
             .aboutInfoUnknownChip: "알 수 없는 칩",
             .aboutInfoUnknownDisplay: "알 수 없음",
-            .aboutInfoDisplayGeneric: "디스플레이"
+            .aboutInfoDisplayGeneric: "디스플레이",
+            .developmentEnableCLICodeTitle: "명령줄 인터페이스",
+            .commandLineInterfaceHelpTitle: "명령줄 인터페이스",
+            .commandLineInterfaceHelpBody: "켜면 셸 PATH에 `launchnext` 이름을 기록하고, 끄면 제거합니다.\nCLI: LaunchNext --cli help\nTUI: LaunchNext --tui",
+            .commandLineInterfaceShowFullPathCommand: "전체 실행 경로 명령 표시",
+            .commandLineInterfaceAgentHint: "이 기능은 주로 Agent 워크플로를 위한 것입니다.",
+            .commandLineInterfaceRemoveCommandButton: "기록된 이름 제거",
+            .commandLineInterfaceRemoveCommandDone: "기록된 이름을 제거했습니다.",
+            .commandLineInterfaceRemoveCommandMissing: "관리되는 기록된 이름을 찾지 못했습니다.",
+            .commandLineInterfaceRemoveCommandInfoTitle: "이 버튼이 수행하는 작업",
+            .commandLineInterfaceRemoveCommandInfoBody: "이 버튼은 관리되는 LaunchNext CLI shim만 제거합니다(관련 없는 파일은 삭제하지 않음):\nrm /opt/homebrew/bin/launchnext\nrm /usr/local/bin/launchnext\nrm ~/.local/bin/launchnext\nrm ~/bin/launchnext\n그런 다음 ~/.zprofile에서 LaunchNext PATH 스니펫을 제거합니다."
         ]) { _, new in new }
 
         builder[.vietnamese]?.merge([
@@ -4291,7 +4344,17 @@ final class LocalizationManager {
             .aboutInfoDisplayTitle: "Màn hình",
             .aboutInfoUnknownChip: "Chip không xác định",
             .aboutInfoUnknownDisplay: "Không rõ",
-            .aboutInfoDisplayGeneric: "Màn hình"
+            .aboutInfoDisplayGeneric: "Màn hình",
+            .developmentEnableCLICodeTitle: "Giao diện dòng lệnh",
+            .commandLineInterfaceHelpTitle: "Giao diện dòng lệnh",
+            .commandLineInterfaceHelpBody: "Khi bật, LaunchNext sẽ ghi tên `launchnext` vào PATH của shell; khi tắt sẽ tự gỡ.\nCLI: LaunchNext --cli help\nTUI: LaunchNext --tui",
+            .commandLineInterfaceShowFullPathCommand: "Hiển thị lệnh đường dẫn thực thi đầy đủ",
+            .commandLineInterfaceAgentHint: "Tính năng này chủ yếu dành cho quy trình Agent.",
+            .commandLineInterfaceRemoveCommandButton: "Gỡ tên đã ghi",
+            .commandLineInterfaceRemoveCommandDone: "Đã gỡ tên đã ghi.",
+            .commandLineInterfaceRemoveCommandMissing: "Không tìm thấy tên đã ghi do LaunchNext quản lý.",
+            .commandLineInterfaceRemoveCommandInfoTitle: "Nút này sẽ làm gì",
+            .commandLineInterfaceRemoveCommandInfoBody: "Nút này chỉ gỡ các LaunchNext CLI shim do ứng dụng quản lý (không xóa file không liên quan):\nrm /opt/homebrew/bin/launchnext\nrm /usr/local/bin/launchnext\nrm ~/.local/bin/launchnext\nrm ~/bin/launchnext\nSau đó nó gỡ đoạn PATH của LaunchNext khỏi ~/.zprofile."
         ]) { _, new in new }
 
         builder[.french]?.merge([
@@ -4341,7 +4404,17 @@ final class LocalizationManager {
             .aboutInfoDisplayTitle: "Écrans",
             .aboutInfoUnknownChip: "Puce inconnue",
             .aboutInfoUnknownDisplay: "Inconnu",
-            .aboutInfoDisplayGeneric: "Écran"
+            .aboutInfoDisplayGeneric: "Écran",
+            .developmentEnableCLICodeTitle: "Interface en ligne de commande",
+            .commandLineInterfaceHelpTitle: "Interface en ligne de commande",
+            .commandLineInterfaceHelpBody: "Quand c'est activé, LaunchNext écrit le nom `launchnext` dans le PATH du shell; quand c'est désactivé, il le retire.\nCLI : LaunchNext --cli help\nTUI : LaunchNext --tui",
+            .commandLineInterfaceShowFullPathCommand: "Afficher la commande avec le chemin exécutable complet",
+            .commandLineInterfaceAgentHint: "Cette fonctionnalité est principalement destinée aux workflows Agent.",
+            .commandLineInterfaceRemoveCommandButton: "Retirer le nom injecté",
+            .commandLineInterfaceRemoveCommandDone: "Nom injecté retiré.",
+            .commandLineInterfaceRemoveCommandMissing: "Aucun nom injecté géré trouvé.",
+            .commandLineInterfaceRemoveCommandInfoTitle: "Ce que fait ce bouton",
+            .commandLineInterfaceRemoveCommandInfoBody: "Ce bouton retire uniquement les shims CLI LaunchNext gérés (sans supprimer de fichiers non liés) :\nrm /opt/homebrew/bin/launchnext\nrm /usr/local/bin/launchnext\nrm ~/.local/bin/launchnext\nrm ~/bin/launchnext\nEnsuite, il supprime le fragment PATH LaunchNext de ~/.zprofile."
         ]) { _, new in new }
 
         builder[.spanish]?.merge([
@@ -4391,7 +4464,17 @@ final class LocalizationManager {
             .aboutInfoDisplayTitle: "Pantallas",
             .aboutInfoUnknownChip: "Chip desconocido",
             .aboutInfoUnknownDisplay: "Desconocido",
-            .aboutInfoDisplayGeneric: "Pantalla"
+            .aboutInfoDisplayGeneric: "Pantalla",
+            .developmentEnableCLICodeTitle: "Interfaz de línea de comandos",
+            .commandLineInterfaceHelpTitle: "Interfaz de línea de comandos",
+            .commandLineInterfaceHelpBody: "Al activarlo, LaunchNext escribe el nombre `launchnext` en el PATH del shell; al desactivarlo, lo elimina.\nCLI: LaunchNext --cli help\nTUI: LaunchNext --tui",
+            .commandLineInterfaceShowFullPathCommand: "Mostrar comando con ruta ejecutable completa",
+            .commandLineInterfaceAgentHint: "Esta función está pensada principalmente para flujos de Agent.",
+            .commandLineInterfaceRemoveCommandButton: "Quitar nombre inyectado",
+            .commandLineInterfaceRemoveCommandDone: "Nombre inyectado eliminado.",
+            .commandLineInterfaceRemoveCommandMissing: "No se encontró ningún nombre inyectado administrado.",
+            .commandLineInterfaceRemoveCommandInfoTitle: "Qué ejecuta este botón",
+            .commandLineInterfaceRemoveCommandInfoBody: "Este botón solo elimina shims CLI de LaunchNext administrados (no borra archivos no relacionados):\nrm /opt/homebrew/bin/launchnext\nrm /usr/local/bin/launchnext\nrm ~/.local/bin/launchnext\nrm ~/bin/launchnext\nLuego elimina el fragmento PATH de LaunchNext en ~/.zprofile."
         ]) { _, new in new }
 
         builder[.italian]?.merge([
@@ -4441,7 +4524,17 @@ final class LocalizationManager {
             .aboutInfoDisplayTitle: "Schermi",
             .aboutInfoUnknownChip: "Chip sconosciuto",
             .aboutInfoUnknownDisplay: "Sconosciuto",
-            .aboutInfoDisplayGeneric: "Schermo"
+            .aboutInfoDisplayGeneric: "Schermo",
+            .developmentEnableCLICodeTitle: "Interfaccia a riga di comando",
+            .commandLineInterfaceHelpTitle: "Interfaccia a riga di comando",
+            .commandLineInterfaceHelpBody: "Quando attivo, LaunchNext scrive il nome `launchnext` nel PATH della shell; quando disattivo, lo rimuove.\nCLI: LaunchNext --cli help\nTUI: LaunchNext --tui",
+            .commandLineInterfaceShowFullPathCommand: "Mostra comando con percorso eseguibile completo",
+            .commandLineInterfaceAgentHint: "Questa funzione è pensata principalmente per i workflow Agent.",
+            .commandLineInterfaceRemoveCommandButton: "Rimuovi nome iniettato",
+            .commandLineInterfaceRemoveCommandDone: "Nome iniettato rimosso.",
+            .commandLineInterfaceRemoveCommandMissing: "Nessun nome iniettato gestito trovato.",
+            .commandLineInterfaceRemoveCommandInfoTitle: "Cosa esegue questo pulsante",
+            .commandLineInterfaceRemoveCommandInfoBody: "Questo pulsante rimuove solo gli shim CLI LaunchNext gestiti (non elimina file non correlati):\nrm /opt/homebrew/bin/launchnext\nrm /usr/local/bin/launchnext\nrm ~/.local/bin/launchnext\nrm ~/bin/launchnext\nPoi rimuove lo snippet PATH di LaunchNext da ~/.zprofile."
         ]) { _, new in new }
 
         builder[.czech]?.merge([
@@ -4491,7 +4584,17 @@ final class LocalizationManager {
             .aboutInfoDisplayTitle: "Displeje",
             .aboutInfoUnknownChip: "Neznámý čip",
             .aboutInfoUnknownDisplay: "Neznámé",
-            .aboutInfoDisplayGeneric: "Displej"
+            .aboutInfoDisplayGeneric: "Displej",
+            .developmentEnableCLICodeTitle: "Rozhraní příkazové řádky",
+            .commandLineInterfaceHelpTitle: "Rozhraní příkazové řádky",
+            .commandLineInterfaceHelpBody: "Po zapnutí LaunchNext zapíše název `launchnext` do PATH shellu; po vypnutí jej odstraní.\nCLI: LaunchNext --cli help\nTUI: LaunchNext --tui",
+            .commandLineInterfaceShowFullPathCommand: "Zobrazit příkaz s plnou cestou ke spustitelnému souboru",
+            .commandLineInterfaceAgentHint: "Tato funkce je určená hlavně pro workflow Agent.",
+            .commandLineInterfaceRemoveCommandButton: "Odebrat zapsaný název",
+            .commandLineInterfaceRemoveCommandDone: "Zapsaný název byl odebrán.",
+            .commandLineInterfaceRemoveCommandMissing: "Nebyl nalezen žádný spravovaný zapsaný název.",
+            .commandLineInterfaceRemoveCommandInfoTitle: "Co toto tlačítko provede",
+            .commandLineInterfaceRemoveCommandInfoBody: "Toto tlačítko odstraní pouze spravované LaunchNext CLI shimy (nesmaže nesouvisející soubory):\nrm /opt/homebrew/bin/launchnext\nrm /usr/local/bin/launchnext\nrm ~/.local/bin/launchnext\nrm ~/bin/launchnext\nPoté odstraní PATH snippet LaunchNext z ~/.zprofile."
         ]) { _, new in new }
 
         builder[.german]?.merge([
@@ -4541,7 +4644,17 @@ final class LocalizationManager {
             .aboutInfoDisplayTitle: "Displays",
             .aboutInfoUnknownChip: "Unbekannter Chip",
             .aboutInfoUnknownDisplay: "Unbekannt",
-            .aboutInfoDisplayGeneric: "Display"
+            .aboutInfoDisplayGeneric: "Display",
+            .developmentEnableCLICodeTitle: "Kommandozeilenoberfläche",
+            .commandLineInterfaceHelpTitle: "Kommandozeilenoberfläche",
+            .commandLineInterfaceHelpBody: "Beim Einschalten schreibt LaunchNext den Namen `launchnext` in den Shell-PATH; beim Ausschalten wird er entfernt.\nCLI: LaunchNext --cli help\nTUI: LaunchNext --tui",
+            .commandLineInterfaceShowFullPathCommand: "Befehl mit vollständigem ausführbaren Pfad anzeigen",
+            .commandLineInterfaceAgentHint: "Diese Funktion ist hauptsächlich für Agent-Workflows gedacht.",
+            .commandLineInterfaceRemoveCommandButton: "Eingeschriebenen Namen entfernen",
+            .commandLineInterfaceRemoveCommandDone: "Eingeschriebener Name entfernt.",
+            .commandLineInterfaceRemoveCommandMissing: "Kein verwalteter eingeschriebener Name gefunden.",
+            .commandLineInterfaceRemoveCommandInfoTitle: "Was diese Schaltfläche ausführt",
+            .commandLineInterfaceRemoveCommandInfoBody: "Diese Schaltfläche entfernt nur verwaltete LaunchNext-CLI-Shims (keine fremden Dateien):\nrm /opt/homebrew/bin/launchnext\nrm /usr/local/bin/launchnext\nrm ~/.local/bin/launchnext\nrm ~/bin/launchnext\nDanach wird der LaunchNext-PATH-Snippet aus ~/.zprofile entfernt."
         ]) { _, new in new }
 
         builder[.russian]?.merge([
@@ -4591,7 +4704,17 @@ final class LocalizationManager {
             .aboutInfoDisplayTitle: "Дисплеи",
             .aboutInfoUnknownChip: "Неизвестный чип",
             .aboutInfoUnknownDisplay: "Неизвестно",
-            .aboutInfoDisplayGeneric: "Дисплей"
+            .aboutInfoDisplayGeneric: "Дисплей",
+            .developmentEnableCLICodeTitle: "Интерфейс командной строки",
+            .commandLineInterfaceHelpTitle: "Интерфейс командной строки",
+            .commandLineInterfaceHelpBody: "При включении LaunchNext записывает имя `launchnext` в PATH оболочки, при выключении удаляет его.\nCLI: LaunchNext --cli help\nTUI: LaunchNext --tui",
+            .commandLineInterfaceShowFullPathCommand: "Показать команду с полным путём к исполняемому файлу",
+            .commandLineInterfaceAgentHint: "Эта функция в основном предназначена для workflow Agent.",
+            .commandLineInterfaceRemoveCommandButton: "Удалить записанное имя",
+            .commandLineInterfaceRemoveCommandDone: "Записанное имя удалено.",
+            .commandLineInterfaceRemoveCommandMissing: "Управляемое записанное имя не найдено.",
+            .commandLineInterfaceRemoveCommandInfoTitle: "Что делает эта кнопка",
+            .commandLineInterfaceRemoveCommandInfoBody: "Эта кнопка удаляет только управляемые LaunchNext CLI shim (без удаления посторонних файлов):\nrm /opt/homebrew/bin/launchnext\nrm /usr/local/bin/launchnext\nrm ~/.local/bin/launchnext\nrm ~/bin/launchnext\nПосле этого удаляется PATH-фрагмент LaunchNext из ~/.zprofile."
         ]) { _, new in new }
 
         builder[.portugueseBrazil]?.merge([
@@ -4642,6 +4765,16 @@ final class LocalizationManager {
             .aboutInfoUnknownChip: "Chip desconhecido",
             .aboutInfoUnknownDisplay: "Desconhecido",
             .aboutInfoDisplayGeneric: "Tela",
+            .developmentEnableCLICodeTitle: "Interface de linha de comando",
+            .commandLineInterfaceHelpTitle: "Interface de linha de comando",
+            .commandLineInterfaceHelpBody: "Ao ativar, o LaunchNext grava o nome `launchnext` no PATH do shell; ao desativar, remove esse nome.\nCLI: LaunchNext --cli help\nTUI: LaunchNext --tui",
+            .commandLineInterfaceShowFullPathCommand: "Mostrar comando com caminho executável completo",
+            .commandLineInterfaceAgentHint: "Este recurso foi feito principalmente para workflows de Agent.",
+            .commandLineInterfaceRemoveCommandButton: "Remover nome injetado",
+            .commandLineInterfaceRemoveCommandDone: "Nome injetado removido.",
+            .commandLineInterfaceRemoveCommandMissing: "Nenhum nome injetado gerenciado foi encontrado.",
+            .commandLineInterfaceRemoveCommandInfoTitle: "O que este botão executa",
+            .commandLineInterfaceRemoveCommandInfoBody: "Este botão remove apenas os shims de CLI gerenciados pelo LaunchNext (sem apagar arquivos não relacionados):\nrm /opt/homebrew/bin/launchnext\nrm /usr/local/bin/launchnext\nrm ~/.local/bin/launchnext\nrm ~/bin/launchnext\nDepois ele remove o trecho de PATH do LaunchNext em ~/.zprofile.",
 
             .onboardingFlowWelcomeTitle: "Bem-vindo ao LaunchNext",
             .onboardingFlowWelcomeSubtitle: "O seu LaunchNext, do seu jeito.",
@@ -4987,6 +5120,16 @@ final class LocalizationManager {
             .aboutInfoUnknownChip: "अज्ञात चिप",
             .aboutInfoUnknownDisplay: "अज्ञात",
             .aboutInfoDisplayGeneric: "डिस्प्ले",
+            .developmentEnableCLICodeTitle: "कमांड लाइन इंटरफ़ेस",
+            .commandLineInterfaceHelpTitle: "कमांड लाइन इंटरफ़ेस",
+            .commandLineInterfaceHelpBody: "इसे चालू करने पर LaunchNext शेल PATH में `launchnext` नाम लिखता है, और बंद करने पर उसे हटा देता है।\nCLI: LaunchNext --cli help\nTUI: LaunchNext --tui",
+            .commandLineInterfaceShowFullPathCommand: "पूरा executable path कमांड दिखाएँ",
+            .commandLineInterfaceAgentHint: "यह सुविधा मुख्य रूप से Agent वर्कफ़्लो के लिए है।",
+            .commandLineInterfaceRemoveCommandButton: "लिखा हुआ नाम हटाएँ",
+            .commandLineInterfaceRemoveCommandDone: "लिखा हुआ नाम हटा दिया गया।",
+            .commandLineInterfaceRemoveCommandMissing: "कोई प्रबंधित लिखा हुआ नाम नहीं मिला।",
+            .commandLineInterfaceRemoveCommandInfoTitle: "यह बटन क्या करता है",
+            .commandLineInterfaceRemoveCommandInfoBody: "यह बटन केवल LaunchNext द्वारा प्रबंधित CLI shim हटाता है (असंबंधित फ़ाइलें नहीं हटाता):\nrm /opt/homebrew/bin/launchnext\nrm /usr/local/bin/launchnext\nrm ~/.local/bin/launchnext\nrm ~/bin/launchnext\nइसके बाद यह ~/.zprofile से LaunchNext का PATH अंश हटाता है।",
             .scanSourcesIntroTitle: "LaunchNext में ऐप खोजने के स्थान प्रबंधित करें",
             .scanSourcesIntroDescription: "यहाँ बाहरी ड्राइव या कस्टम फ़ोल्डर जोड़ें ताकि वहाँ की ऐप्स अपने आप LaunchNext में दिखें।",
             .scanSourcesPlaceholder: "जल्द ही: यहाँ कस्टम फ़ोल्डर जोड़ने या हटाने का विकल्प मिलेगा और LaunchNext उन्हें अद्यतन रखेगा।",
@@ -5000,7 +5143,6 @@ final class LocalizationManager {
         ]) { _, new in new }
 
         builder[.hindi] = hindiDictionary
-        
 
         translations = builder
     }
