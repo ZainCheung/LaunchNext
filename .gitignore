@@ -6,6 +6,8 @@ xcuserdata/
 # Build artifacts
 build/
 DerivedData/
+.build/
+dist/
 
 # macOS
 .DS_Store

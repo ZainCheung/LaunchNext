@@ -1,0 +1,58 @@
+name: Update Homebrew Tap
+
+on:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: read
+
+jobs:
+  update-homebrew:
+    runs-on: macos-latest
+    steps:
+      - name: Read checksum from release assets
+        id: checksum
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.event.release.tag_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          VERSION="${TAG#v}"
+          ZIP_NAME="LaunchNext${VERSION}.zip"
+
+          gh release download "${TAG}" \
+            --repo "${REPO}" \
+            --pattern "checksums.txt" \
+            --dir .
+
+          SHA256="$(awk -v file="${ZIP_NAME}" '$2 == file { print $1 }' checksums.txt)"
+          if [[ -z "${SHA256}" ]]; then
+            echo "Could not find checksum for ${ZIP_NAME} in checksums.txt" >&2
+            exit 1
+          fi
+
+          echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
+          echo "sha256=${SHA256}" >> "${GITHUB_OUTPUT}"
+
+      - name: Update tap cask
+        env:
+          TAP_TOKEN: ${{ secrets.TAP_TOKEN }}
+          TAG: ${{ github.event.release.tag_name }}
+          SHA256: ${{ steps.checksum.outputs.sha256 }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${TAP_TOKEN}" ]]; then
+            echo "TAP_TOKEN is not configured; skipping Homebrew tap update."
+            exit 0
+          fi
+
+          curl -X POST \
+            -H "Authorization: token ${TAP_TOKEN}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/RoversX/homebrew-tap/actions/workflows/update-formula.yml/dispatches \
+            -d "{\"ref\":\"main\",\"inputs\":{\"formula\":\"launchnext\",\"tag\":\"${TAG}\",\"repository\":\"RoversX/LaunchNext\",\"sha256\":\"${SHA256}\"}}"
