@@ -22,6 +22,15 @@ MacOS Tahoe removed launchpad,and it's so hard to use, it's doesn't use your Bio
 
 *LaunchNow has chosen the GPL 3 license. LaunchNext follows the same licensing terms.*
 
+### Install with Homebrew
+
+```bash
+brew tap RoversX/homebrew-tap
+brew install --cask launchnext
+```
+
+LaunchNext includes its own updater. The Homebrew cask is mainly for installation and manual upgrades.
+
 ⚠️ **If macOS blocks the app, run this in Terminal:**
 ```bash
 sudo xattr -r -d com.apple.quarantine /Applications/LaunchNext.app
