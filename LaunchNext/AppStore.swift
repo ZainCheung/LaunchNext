@@ -1946,6 +1946,7 @@ final class AppStore: ObservableObject {
     @Published var folderCreationTarget: AppInfo? = nil
     @Published var openFolderActivatedByKeyboard: Bool = false
     @Published var isFolderNameEditing: Bool = false
+    @Published var folderRenameRequestID: String? = nil
     @Published var handoffDraggingApp: AppInfo? = nil
     @Published var handoffDragScreenLocation: CGPoint? = nil
     
@@ -4032,6 +4033,39 @@ final class AppStore: ObservableObject {
         
         rebuildItems()
         saveAllOrder()
+    }
+
+    @discardableResult
+    func showAppInFinder(_ app: AppInfo) -> Bool {
+        guard FileManager.default.fileExists(atPath: app.url.path) else { return false }
+        NSWorkspace.shared.activateFileViewerSelecting([app.url])
+        return true
+    }
+
+    @discardableResult
+    func copyAppPath(_ app: AppInfo) -> Bool {
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        return pasteboard.setString(app.url.path, forType: .string)
+    }
+
+    func requestRenameFolder(_ folder: FolderInfo) {
+        let folderID = folder.id
+        let resolvedFolder: FolderInfo
+        if let latest = folders.first(where: { $0.id == folderID }) {
+            resolvedFolder = latest
+        } else if let item = items.first(where: {
+            if case .folder(let existing) = $0 { return existing.id == folderID }
+            return false
+        }), case .folder(let existing) = item {
+            resolvedFolder = existing
+        } else {
+            resolvedFolder = folder
+        }
+
+        openFolderActivatedByKeyboard = false
+        openFolder = resolvedFolder
+        folderRenameRequestID = folderID
     }
 
     @discardableResult

@@ -34,6 +34,24 @@ extension View {
         if let app {
             contextMenu {
                 Button {
+                    if !appStore.showAppInFinder(app) {
+                        NSSound.beep()
+                    }
+                } label: {
+                    Label(appStore.localized(.contextMenuShowInFinder), systemImage: "folder")
+                }
+
+                Button {
+                    if !appStore.copyAppPath(app) {
+                        NSSound.beep()
+                    }
+                } label: {
+                    Label(appStore.localized(.contextMenuCopyAppPath), systemImage: "doc.on.doc")
+                }
+
+                Divider()
+
+                Button {
                     _ = appStore.hideApp(app)
                 } label: {
                     Label(appStore.localized(.hiddenAppsAddButton), systemImage: "eye.slash")
@@ -62,6 +80,14 @@ extension View {
             }
         } else if let folder {
             contextMenu {
+                Button {
+                    appStore.requestRenameFolder(folder)
+                } label: {
+                    Label(appStore.localized(.contextMenuRenameFolder), systemImage: "pencil")
+                }
+
+                Divider()
+
                 Button(role: .destructive) {
                     _ = appStore.dissolveFolder(folder)
                 } label: {
@@ -100,6 +126,26 @@ extension CAGridView {
             contextMenuTargetApp = app
             contextMenuTargetFolder = nil
             let menu = NSMenu(title: "")
+            let showInFinderItem = NSMenuItem(
+                title: showInFinderMenuTitle,
+                action: #selector(handleShowAppInFinderFromContextMenu(_:)),
+                keyEquivalent: ""
+            )
+            showInFinderItem.image = NSImage(systemSymbolName: "folder", accessibilityDescription: nil)
+            showInFinderItem.target = self
+            menu.addItem(showInFinderItem)
+
+            let copyPathItem = NSMenuItem(
+                title: copyAppPathMenuTitle,
+                action: #selector(handleCopyAppPathFromContextMenu(_:)),
+                keyEquivalent: ""
+            )
+            copyPathItem.image = NSImage(systemSymbolName: "doc.on.doc", accessibilityDescription: nil)
+            copyPathItem.target = self
+            menu.addItem(copyPathItem)
+
+            menu.addItem(NSMenuItem.separator())
+
             let hideItem = NSMenuItem(
                 title: hideAppMenuTitle,
                 action: #selector(handleHideAppFromContextMenu(_:)),
@@ -143,6 +189,17 @@ extension CAGridView {
             contextMenuTargetApp = nil
             contextMenuTargetFolder = folder
             let menu = NSMenu(title: "")
+            let renameItem = NSMenuItem(
+                title: renameFolderMenuTitle,
+                action: #selector(handleRenameFolderFromContextMenu(_:)),
+                keyEquivalent: ""
+            )
+            renameItem.image = NSImage(systemSymbolName: "pencil", accessibilityDescription: nil)
+            renameItem.target = self
+            menu.addItem(renameItem)
+
+            menu.addItem(NSMenuItem.separator())
+
             let dissolveItem = NSMenuItem(
                 title: dissolveFolderMenuTitle,
                 action: #selector(handleDissolveFolderFromContextMenu(_:)),
@@ -163,9 +220,30 @@ extension CAGridView {
         }
     }
 
+    @objc private func handleShowAppInFinderFromContextMenu(_ sender: NSMenuItem) {
+        guard let app = contextMenuTargetApp else { return }
+        onShowAppInFinder?(app)
+        contextMenuTargetApp = nil
+        contextMenuTargetFolder = nil
+    }
+
+    @objc private func handleCopyAppPathFromContextMenu(_ sender: NSMenuItem) {
+        guard let app = contextMenuTargetApp else { return }
+        onCopyAppPath?(app)
+        contextMenuTargetApp = nil
+        contextMenuTargetFolder = nil
+    }
+
     @objc private func handleHideAppFromContextMenu(_ sender: NSMenuItem) {
         guard let app = contextMenuTargetApp else { return }
         onHideApp?(app)
+        contextMenuTargetApp = nil
+        contextMenuTargetFolder = nil
+    }
+
+    @objc private func handleRenameFolderFromContextMenu(_ sender: NSMenuItem) {
+        guard let folder = contextMenuTargetFolder else { return }
+        onRenameFolder?(folder)
         contextMenuTargetApp = nil
         contextMenuTargetFolder = nil
     }

@@ -52,7 +52,10 @@ struct CAGridViewRepresentable: NSViewRepresentable {
         view.dockDragEnabled = appStore.dockDragEnabled
         view.dockDragSide = appStore.dockDragSide
         view.externalAppDragTriggerDistance = CGFloat(appStore.dockDragTriggerDistance)
+        view.showInFinderMenuTitle = appStore.localized(.contextMenuShowInFinder)
+        view.copyAppPathMenuTitle = appStore.localized(.contextMenuCopyAppPath)
         view.hideAppMenuTitle = appStore.localized(.hiddenAppsAddButton)
+        view.renameFolderMenuTitle = appStore.localized(.contextMenuRenameFolder)
         view.dissolveFolderMenuTitle = appStore.localized(.contextMenuDissolveFolder)
         view.uninstallWithToolMenuTitle = appStore.localized(.contextMenuUninstallWithConfiguredTool)
         view.batchSelectAppsMenuTitle = appStore.localized(.contextMenuBatchSelectApps)
@@ -106,9 +109,28 @@ struct CAGridViewRepresentable: NSViewRepresentable {
             AppDelegate.shared?.hideWindow()
         }
 
+        view.onShowAppInFinder = { app in
+            DispatchQueue.main.async {
+                if !appStore.showAppInFinder(app) {
+                    NSSound.beep()
+                }
+            }
+        }
+        view.onCopyAppPath = { app in
+            DispatchQueue.main.async {
+                if !appStore.copyAppPath(app) {
+                    NSSound.beep()
+                }
+            }
+        }
         view.onHideApp = { app in
             DispatchQueue.main.async {
                 _ = appStore.hideApp(app)
+            }
+        }
+        view.onRenameFolder = { folder in
+            DispatchQueue.main.async {
+                appStore.requestRenameFolder(folder)
             }
         }
         view.onDissolveFolder = { folder in
@@ -247,7 +269,10 @@ struct CAGridViewRepresentable: NSViewRepresentable {
         nsView.animationsEnabled = appStore.enableAnimations
         nsView.animationDuration = appStore.animationDuration
         nsView.isScrollEnabled = appStore.openFolder == nil && !appStore.isSetting
+        nsView.showInFinderMenuTitle = appStore.localized(.contextMenuShowInFinder)
+        nsView.copyAppPathMenuTitle = appStore.localized(.contextMenuCopyAppPath)
         nsView.hideAppMenuTitle = appStore.localized(.hiddenAppsAddButton)
+        nsView.renameFolderMenuTitle = appStore.localized(.contextMenuRenameFolder)
         nsView.dissolveFolderMenuTitle = appStore.localized(.contextMenuDissolveFolder)
         nsView.uninstallWithToolMenuTitle = appStore.localized(.contextMenuUninstallWithConfiguredTool)
         nsView.batchSelectAppsMenuTitle = appStore.localized(.contextMenuBatchSelectApps)

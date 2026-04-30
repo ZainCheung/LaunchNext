@@ -102,7 +102,10 @@ final class CAGridView: NSView, CALayerDelegate, NSDraggingSource {
     var onPageChanged: ((Int) -> Void)?
     var onFPSUpdate: ((Double) -> Void)?
     var onEmptyAreaClicked: (() -> Void)?
+    var onShowAppInFinder: ((AppInfo) -> Void)?
+    var onCopyAppPath: ((AppInfo) -> Void)?
     var onHideApp: ((AppInfo) -> Void)?
+    var onRenameFolder: ((FolderInfo) -> Void)?
     var onDissolveFolder: ((FolderInfo) -> Void)?
     var onUninstallWithTool: ((AppInfo) -> Void)?
     var onCreateFolder: ((AppInfo, AppInfo, Int) -> Void)?  // (拖拽的app, 目标app, 位置)
@@ -110,7 +113,10 @@ final class CAGridView: NSView, CALayerDelegate, NSDraggingSource {
     var onReorderItems: ((Int, Int) -> Void)?               // 重新排序 (fromIndex, toIndex)
     var onReorderAppBatch: (([String], Int) -> Void)?       // 批量重排（按路径顺序）
     var onRequestNewPage: (() -> Void)?                     // 请求创建新页面
+    var showInFinderMenuTitle: String = "Show in Finder"
+    var copyAppPathMenuTitle: String = "Copy App Path"
     var hideAppMenuTitle: String = "Hide application"
+    var renameFolderMenuTitle: String = "Rename Folder"
     var dissolveFolderMenuTitle: String = "Dissolve folder"
     var uninstallWithToolMenuTitle: String = "Uninstall with configured tool"
     var batchSelectAppsMenuTitle: String = "Batch Select Apps"

@@ -83,6 +83,7 @@ struct FolderView: View {
             } else {
                 isKeyboardNavigationActive = false
             }
+            consumeRenameRequestIfNeeded()
         }
         .onChange(of: isTextFieldFocused) { focused in
             if !focused && isEditingName {
@@ -120,6 +121,9 @@ struct FolderView: View {
             forceRefreshTrigger = UUID()
             // 触发视图重新渲染
             folderName = folder.name
+        }
+        .onChange(of: appStore.folderRenameRequestID) {
+            consumeRenameRequestIfNeeded()
         }
         .onReceive(ControllerInputManager.shared.commands.receive(on: RunLoop.main)) { command in
             handleControllerCommand(command)
@@ -247,6 +251,14 @@ struct FolderView: View {
         folderName = folder.name
         isTextFieldFocused = true
         appStore.isFolderNameEditing = true
+    }
+
+    private func consumeRenameRequestIfNeeded() {
+        guard appStore.folderRenameRequestID == folder.id else { return }
+        appStore.folderRenameRequestID = nil
+        DispatchQueue.main.async {
+            startEditing()
+        }
     }
     
     private func finishEditing() {
