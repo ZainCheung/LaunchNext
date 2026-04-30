@@ -10,6 +10,9 @@ struct FolderView: View {
     @State private var folderName: String = ""
     @State private var isEditingName = false
     @State private var forceRefreshTrigger: UUID = UUID()
+    @State private var folderCurrentPage: Int = 0
+    @State private var folderPageCount: Int = 1
+    @State private var folderVerticalScrollOffset: CGFloat = 0
     @FocusState private var isTextFieldFocused: Bool
     @Namespace private var reorderNamespaceFolder
     // 键盘导航
@@ -39,6 +42,7 @@ struct FolderView: View {
     @State private var columnsCount: Int = 4
     private let gridPadding: CGFloat = 16
     private let titlePadding: CGFloat = 16
+    private let folderTitleHeight: CGFloat = 72
 
     private var visualApps: [AppInfo] {
         guard let dragging = draggingApp, let pending = pendingDropIndex else { return folder.apps }
@@ -53,17 +57,10 @@ struct FolderView: View {
     }
     
     var body: some View {
-        VStack(spacing: 0) {
-            // 优化的文件夹标题区域
-            folderTitleSection
-            
-            // 应用网格区域
-            GeometryReader { geo in
-                appGridSection(geometry: geo)
-            }
-        }
+        folderContent
         .padding()
         .liquidGlass(in: RoundedRectangle(cornerRadius: 30))
+        .clipShape(RoundedRectangle(cornerRadius: 30))
         .transition(LNAnimations.folderOpenTransition)
         .onTapGesture {
             // 当点击文件夹视图的非编辑区域时，如果正在编辑名称，则退出编辑模式
@@ -72,6 +69,7 @@ struct FolderView: View {
             }
         }
         .onAppear {
+            resetFolderPagingState()
             folderName = folder.name
             setupKeyHandlers()
             setupInitialSelection()
@@ -94,6 +92,12 @@ struct FolderView: View {
             clampSelection()
             // 当应用列表变化时，强制刷新视图
             forceRefreshTrigger = UUID()
+        }
+        .onChange(of: folder.id) {
+            resetFolderPagingState()
+        }
+        .onChange(of: appStore.folderLayoutMode) {
+            resetFolderPagingState()
         }
         .onChange(of: appStore.voiceFeedbackEnabled) { _, enabled in
             if enabled {
@@ -132,6 +136,36 @@ struct FolderView: View {
             if let monitor = keyMonitor {
                 NSEvent.removeMonitor(monitor)
                 keyMonitor = nil
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var folderContent: some View {
+        if shouldScrollFolderTitleWithContent {
+            GeometryReader { geo in
+                ZStack(alignment: .top) {
+                    appGridSection(geometry: geo)
+
+                    folderTitleSection
+                        .frame(height: folderTitleHeight)
+                        .offset(y: -min(folderVerticalScrollOffset, folderTitleHeight))
+                        .opacity(folderTitleOpacity)
+                        .allowsHitTesting(folderVerticalScrollOffset < folderTitleHeight || isEditingName)
+                }
+            }
+        } else {
+            VStack(spacing: 0) {
+                folderTitleSection
+                    .frame(height: folderTitleHeight)
+
+                GeometryReader { geo in
+                    appGridSection(geometry: geo)
+                }
+
+                if shouldShowFolderPageIndicator {
+                    folderPageIndicator
+                }
             }
         }
     }
@@ -183,6 +217,48 @@ struct FolderView: View {
         }
         .padding(.horizontal, titlePadding)
     }
+
+    private var shouldShowFolderPageIndicator: Bool {
+        appStore.useCAGridRenderer && appStore.folderLayoutMode == .paged && folderPageCount > 1
+    }
+
+    private var shouldScrollFolderTitleWithContent: Bool {
+        appStore.useCAGridRenderer && appStore.folderLayoutMode == .vertical
+    }
+
+    private var folderTitleOpacity: Double {
+        if isEditingName { return 1 }
+        let fadeStart = folderTitleHeight * 0.45
+        let fadeRange = max(folderTitleHeight * 0.55, 1)
+        let progress = min(max((folderVerticalScrollOffset - fadeStart) / fadeRange, 0), 1)
+        return Double(1 - progress)
+    }
+
+    private var safeFolderCurrentPage: Int {
+        min(max(0, folderCurrentPage), max(folderPageCount - 1, 0))
+    }
+
+    private var folderPageIndicator: some View {
+        HStack(spacing: 8) {
+            ForEach(0..<folderPageCount, id: \.self) { index in
+                Circle()
+                    .fill(safeFolderCurrentPage == index ? Color.gray : Color.gray.opacity(0.3))
+                    .frame(width: 8, height: 8)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        folderCurrentPage = index
+                    }
+            }
+        }
+        .padding(.top, 2)
+        .padding(.bottom, 4)
+    }
+
+    private func resetFolderPagingState() {
+        folderCurrentPage = 0
+        folderPageCount = 1
+        folderVerticalScrollOffset = 0
+    }
     
     @ViewBuilder
     private func appGridSection(geometry geo: GeometryProxy) -> some View {
@@ -201,7 +277,22 @@ struct FolderView: View {
         let appHeight = max(recomputedAppHeight, iconSize + 32)
         let labelWidth: CGFloat = columnWidth * 0.9
 
-        ZStack(alignment: .topLeading) {
+        if appStore.useCAGridRenderer {
+            CAFolderGridViewRepresentable(
+                appStore: appStore,
+                folder: $folder,
+                currentPage: $folderCurrentPage,
+                pageCount: $folderPageCount,
+                verticalScrollOffset: $folderVerticalScrollOffset,
+                iconSize: iconSize,
+                verticalHeaderHeight: shouldScrollFolderTitleWithContent ? folderTitleHeight : 0,
+                onClose: onClose,
+                onLaunchApp: onLaunchApp
+            )
+            .id("ca_folder_grid_\(folder.id)_\(appStore.folderLayoutMode.rawValue)")
+            .onAppear { columnsCount = desiredColumns }
+        } else {
+            ZStack(alignment: .topLeading) {
             ScrollView {
                 ScrollOffsetReader { offsetY in
                     scrollOffsetY = offsetY
@@ -241,7 +332,8 @@ struct FolderView: View {
                     .allowsHitTesting(false)
             }
         }
-        .coordinateSpace(name: "folderGrid")
+            .coordinateSpace(name: "folderGrid")
+        }
     }
     
     // 拖拽视觉重排
@@ -589,6 +681,7 @@ extension FolderView {
     private func handleKeyEvent(_ event: NSEvent) -> NSEvent? {
         // 正在编辑文件夹名时，放行输入
         if isTextFieldFocused { return event }
+        if appStore.useCAGridRenderer { return event }
 
         // Esc 关闭文件夹
         if event.keyCode == 53 {

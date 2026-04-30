@@ -2815,11 +2815,15 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
                 }
                 Spacer()
                 Menu {
-                    Button(appStore.localized(.resetLayout), role: .destructive) {
+                    Button(role: .destructive) {
                         showResetConfirm = true
+                    } label: {
+                        Label(appStore.localized(.resetLayout), systemImage: "square.grid.3x3")
                     }
-                    Button(appStore.localized(.resetAppearanceSettings), role: .destructive) {
+                    Button(role: .destructive) {
                         showResetAppearanceConfirm = true
+                    } label: {
+                        Label(appStore.localized(.resetAppearanceSettings), systemImage: "paintbrush")
                     }
                 } label: {
                     Label(appStore.localized(.resetConfirm), systemImage: "arrow.counterclockwise")
@@ -3733,8 +3737,10 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
 
         appStore.compactItemsWithinPages()
         appStore.removeEmptyPages()
-        appStore.folderUpdateTrigger = UUID()
-        appStore.gridRefreshTrigger = UUID()
+        DispatchQueue.main.async {
+            appStore.folderUpdateTrigger = UUID()
+            appStore.gridRefreshTrigger = UUID()
+        }
         appStore.saveAllOrder()
     }
 
@@ -4675,18 +4681,82 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
                 }
             }
 
-            VStack(alignment: .leading, spacing: 8) {
-                Text(appStore.localized(.backgroundStyleTitle))
-                    .font(.headline)
-                Picker("", selection: $appStore.launchpadBackgroundStyle) {
-                    ForEach(AppStore.BackgroundStyle.allCases) { style in
-                        Text(appStore.localized(style.localizationKey)).tag(style)
-                    }
+            backgroundStyleCard
+        }
+    }
+
+    private var backgroundStyleCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .center, spacing: 10) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Color.accentColor.opacity(0.14))
+                    Image(systemName: "paintpalette")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(Color.accentColor)
                 }
-                .pickerStyle(.segmented)
-                .labelsHidden()
+                .frame(width: 32, height: 32)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(appStore.localized(.backgroundStyleTitle))
+                        .font(.headline)
+                    Text(appStore.localized(appStore.launchpadBackgroundStyle.localizationKey))
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+            }
+
+            HStack(spacing: 10) {
+                backgroundStyleOption(.blur, systemImage: "drop")
+                backgroundStyleOption(.glass, systemImage: "sparkles")
             }
         }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color(nsColor: .quaternarySystemFill))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .strokeBorder(Color(nsColor: .separatorColor).opacity(0.28), lineWidth: 0.7)
+        )
+    }
+
+    private func backgroundStyleOption(_ style: AppStore.BackgroundStyle, systemImage: String) -> some View {
+        let selected = appStore.launchpadBackgroundStyle == style
+
+        return Button {
+            appStore.launchpadBackgroundStyle = style
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 13, weight: .semibold))
+                Text(appStore.localized(style.localizationKey))
+                    .font(.callout.weight(.semibold))
+                    .lineLimit(1)
+                Spacer(minLength: 0)
+                if selected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 13, weight: .semibold))
+                }
+            }
+            .foregroundStyle(selected ? Color.accentColor : Color.primary)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .frame(maxWidth: .infinity)
+            .background(
+                RoundedRectangle(cornerRadius: 13, style: .continuous)
+                    .fill(selected ? Color.accentColor.opacity(0.16) : Color(nsColor: .controlBackgroundColor).opacity(0.72))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 13, style: .continuous)
+                    .strokeBorder(selected ? Color.accentColor.opacity(0.42) : Color(nsColor: .separatorColor).opacity(0.22), lineWidth: 0.8)
+            )
+        }
+        .buttonStyle(.plain)
     }
 
     private var appearanceSecondarySection: some View {
@@ -4794,7 +4864,83 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
                 .font(.footnote)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+
+            folderLayoutModeCard
         }
+    }
+
+    private var folderLayoutModeCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .center, spacing: 10) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Color.accentColor.opacity(0.14))
+                    Image(systemName: "rectangle.grid.2x2")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(Color.accentColor)
+                }
+                .frame(width: 32, height: 32)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(appStore.localized(.folderLayoutTitle))
+                        .font(.headline)
+                    Text(appStore.localized(.folderLayoutDescription))
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+            }
+
+            HStack(spacing: 10) {
+                folderLayoutModeOption(.paged, systemImage: "rectangle.grid.2x2")
+                folderLayoutModeOption(.vertical, systemImage: "arrow.up.and.down")
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color(nsColor: .quaternarySystemFill))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .strokeBorder(Color(nsColor: .separatorColor).opacity(0.28), lineWidth: 0.7)
+        )
+    }
+
+    private func folderLayoutModeOption(_ mode: AppStore.FolderLayoutMode, systemImage: String) -> some View {
+        let selected = appStore.folderLayoutMode == mode
+
+        return Button {
+            appStore.folderLayoutMode = mode
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 13, weight: .semibold))
+                Text(appStore.localized(mode.localizationKey))
+                    .font(.callout.weight(.semibold))
+                    .lineLimit(1)
+                Spacer(minLength: 0)
+                if selected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 13, weight: .semibold))
+                }
+            }
+            .foregroundStyle(selected ? Color.accentColor : Color.primary)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .frame(maxWidth: .infinity)
+            .background(
+                RoundedRectangle(cornerRadius: 13, style: .continuous)
+                    .fill(selected ? Color.accentColor.opacity(0.16) : Color(nsColor: .controlBackgroundColor).opacity(0.72))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 13, style: .continuous)
+                    .strokeBorder(selected ? Color.accentColor.opacity(0.42) : Color(nsColor: .separatorColor).opacity(0.22), lineWidth: 0.8)
+            )
+        }
+        .buttonStyle(.plain)
     }
 
     private var appearanceTertiarySection: some View {
@@ -5249,6 +5395,7 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
                     keys.insert("gridRowSpacing")
                     keys.insert("folderDropZoneScale")
                     keys.insert(AppStore.folderPreviewHighResKey)
+                    keys.insert(AppStore.folderLayoutModeKey)
                     keys.insert("pageIndicatorOffset")
                     keys.insert(AppStore.pageIndicatorTopPaddingKey)
                     keys.insert(AppStore.pageIndicatorPerDisplayEnabledKey)

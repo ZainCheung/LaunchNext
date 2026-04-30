@@ -105,6 +105,20 @@ final class AppStore: ObservableObject {
         var id: String { rawValue }
     }
 
+    enum FolderLayoutMode: String, CaseIterable, Identifiable {
+        case paged
+        case vertical
+
+        var id: String { rawValue }
+
+        var localizationKey: LocalizationKey {
+            switch self {
+            case .paged: return .folderLayoutPaged
+            case .vertical: return .folderLayoutVertical
+            }
+        }
+    }
+
     struct ModeScopedAppearanceSettings: Codable, Equatable {
         var iconScale: Double
         var iconLabelFontSize: Double
@@ -317,6 +331,7 @@ final class AppStore: ObservableObject {
     static let followScrollPagingKey = "followScrollPagingEnabled"
     static let reverseWheelPagingKey = "reverseWheelPagingDirection"
     static let useCAGridRendererKey = "useCAGridRenderer"
+    static let folderLayoutModeKey = "folderLayoutMode"
     static let windowOpenAnimationKey = "windowOpenAnimationEnabled"
     static let developmentEnableCLICodeKey = "developmentEnableCLICode"
     static let fuzzySearchEnabledKey = "fuzzySearchEnabled"
@@ -384,6 +399,21 @@ final class AppStore: ObservableObject {
             return style
         }
         return .glass
+    }
+
+    private static func loadFolderLayoutMode(from defaults: UserDefaults = .standard,
+                                             isExistingInstall: Bool? = nil) -> FolderLayoutMode {
+        if let raw = defaults.string(forKey: folderLayoutModeKey),
+           let mode = FolderLayoutMode(rawValue: raw) {
+            return mode
+        }
+        let existingInstall = isExistingInstall ?? (
+            defaults.object(forKey: onboardingVersionKey) != nil ||
+            defaults.object(forKey: useCAGridRendererKey) != nil ||
+            defaults.object(forKey: "isFullscreenMode") != nil ||
+            defaults.object(forKey: gridColumnsKey) != nil
+        )
+        return existingInstall ? .vertical : .paged
     }
 
     private static let defaultBackgroundMaskOpacity: Double = 0.1
@@ -652,6 +682,7 @@ final class AppStore: ObservableObject {
         defaults.set(true, forKey: "isFullscreenMode")
         defaults.set(true, forKey: "showLabels")
         defaults.set(true, forKey: Self.folderPreviewHighResKey)
+        defaults.set(FolderLayoutMode.paged.rawValue, forKey: Self.folderLayoutModeKey)
         defaults.set(false, forKey: "hideDock")
         defaults.set(0.8, forKey: "scrollSensitivity")
         defaults.set(Self.defaultGridColumnsPerPage, forKey: Self.gridColumnsKey)
@@ -711,6 +742,7 @@ final class AppStore: ObservableObject {
         isFullscreenMode = defaults.object(forKey: "isFullscreenMode") as? Bool ?? true
         showLabels = defaults.object(forKey: "showLabels") as? Bool ?? true
         enableHighResFolderPreviews = defaults.object(forKey: Self.folderPreviewHighResKey) as? Bool ?? true
+        folderLayoutMode = Self.loadFolderLayoutMode(from: defaults, isExistingInstall: nil)
         hideDock = defaults.object(forKey: "hideDock") as? Bool ?? false
         scrollSensitivity = defaults.object(forKey: "scrollSensitivity") as? Double ?? 0.8
         gridColumnsPerPage = Self.clampColumns(defaults.object(forKey: Self.gridColumnsKey) as? Int ?? Self.defaultGridColumnsPerPage)
@@ -1193,6 +1225,16 @@ final class AppStore: ObservableObject {
             clearIconCachesForLayoutChange()
             triggerFolderUpdate()
             triggerGridRefresh()
+        }
+    }
+
+    @Published var folderLayoutMode: FolderLayoutMode = AppStore.loadFolderLayoutMode() {
+        didSet {
+            guard folderLayoutMode != oldValue else { return }
+            UserDefaults.standard.set(folderLayoutMode.rawValue, forKey: Self.folderLayoutModeKey)
+            DispatchQueue.main.async { [weak self] in
+                self?.triggerFolderUpdate()
+            }
         }
     }
 
@@ -1954,6 +1996,8 @@ final class AppStore: ObservableObject {
     @Published var folderUpdateTrigger: UUID = UUID()
     @Published var gridRefreshTrigger: UUID = UUID()
     @Published var iconCacheRefreshTrigger: UUID = UUID()
+    private var folderUpdateScheduled = false
+    private var gridRefreshScheduled = false
     
     var modelContext: ModelContext?
 
@@ -2354,6 +2398,20 @@ final class AppStore: ObservableObject {
     }
 
     init() {
+        let defaults = UserDefaults.standard
+        let existingInstallBeforeDefaults = defaults.object(forKey: Self.onboardingVersionKey) != nil ||
+            defaults.object(forKey: Self.useCAGridRendererKey) != nil ||
+            defaults.object(forKey: "isFullscreenMode") != nil ||
+            defaults.object(forKey: Self.gridColumnsKey) != nil
+
+        if defaults.object(forKey: Self.folderLayoutModeKey) == nil {
+            let initialFolderLayout = Self.loadFolderLayoutMode(from: defaults, isExistingInstall: existingInstallBeforeDefaults)
+            defaults.set(initialFolderLayout.rawValue, forKey: Self.folderLayoutModeKey)
+            self.folderLayoutMode = initialFolderLayout
+        } else {
+            self.folderLayoutMode = Self.loadFolderLayoutMode(from: defaults, isExistingInstall: existingInstallBeforeDefaults)
+        }
+
         if UserDefaults.standard.object(forKey: "isFullscreenMode") == nil {
             self.isFullscreenMode = true // 新用户默认 Classic (Fullscreen)
             UserDefaults.standard.set(true, forKey: "isFullscreenMode")
@@ -2363,7 +2421,6 @@ final class AppStore: ObservableObject {
         if UserDefaults.standard.object(forKey: PerformanceMode.userDefaultsKey) == nil {
             PerformanceMode.persist(.lean)
         }
-        let defaults = UserDefaults.standard
 
         let shouldRememberPage = defaults.object(forKey: Self.rememberPageKey) == nil ? true : defaults.bool(forKey: Self.rememberPageKey)
         let savedPageIndex = defaults.object(forKey: Self.rememberedPageIndexKey) as? Int
@@ -4036,6 +4093,34 @@ final class AppStore: ObservableObject {
     }
 
     @discardableResult
+    func reorderAppInFolder(folderID: String, from sourceIndex: Int, to destinationIndex: Int) -> Bool {
+        guard let folderIndex = folders.firstIndex(where: { $0.id == folderID }) else { return false }
+        var updatedFolder = folders[folderIndex]
+        guard updatedFolder.apps.indices.contains(sourceIndex) else { return false }
+
+        let movingApp = updatedFolder.apps.remove(at: sourceIndex)
+        let clampedDestination = min(max(0, destinationIndex), updatedFolder.apps.count)
+        updatedFolder.apps.insert(movingApp, at: clampedDestination)
+        folders[folderIndex] = updatedFolder
+
+        for idx in items.indices {
+            if case .folder(let folder) = items[idx], folder.id == folderID {
+                items[idx] = .folder(updatedFolder)
+            }
+        }
+
+        if openFolder?.id == folderID {
+            openFolder = updatedFolder
+        }
+
+        triggerFolderUpdate()
+        triggerGridRefresh()
+        refreshCacheAfterFolderOperation()
+        saveAllOrder()
+        return true
+    }
+
+    @discardableResult
     func showAppInFinder(_ app: AppInfo) -> Bool {
         guard FileManager.default.fileExists(atPath: app.url.path) else { return false }
         NSWorkspace.shared.activateFileViewerSelecting([app.url])
@@ -4189,6 +4274,7 @@ final class AppStore: ObservableObject {
             "isFullscreenMode",
             "showLabels",
             Self.folderPreviewHighResKey,
+            Self.folderLayoutModeKey,
             "hideDock",
             "scrollSensitivity",
             Self.gridColumnsKey,
@@ -4764,8 +4850,21 @@ final class AppStore: ObservableObject {
 
     // 触发文件夹更新，通知所有相关视图刷新图标
     private func triggerFolderUpdate() {
-        folderUpdateTrigger = UUID()
-        FolderPreviewCache.shared.clear()
+        if !Thread.isMainThread {
+            DispatchQueue.main.async { [weak self] in
+                self?.triggerFolderUpdate()
+            }
+            return
+        }
+
+        guard !folderUpdateScheduled else { return }
+        folderUpdateScheduled = true
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.folderUpdateScheduled = false
+            self.folderUpdateTrigger = UUID()
+            FolderPreviewCache.shared.clear()
+        }
     }
 
     func scheduleSystemAppearanceRefresh() {
@@ -4877,8 +4976,21 @@ final class AppStore: ObservableObject {
     
     // 触发网格视图刷新，用于拖拽操作后的界面更新
     func triggerGridRefresh() {
-        clampCurrentPageWithinBounds()
-        gridRefreshTrigger = UUID()
+        if !Thread.isMainThread {
+            DispatchQueue.main.async { [weak self] in
+                self?.triggerGridRefresh()
+            }
+            return
+        }
+
+        guard !gridRefreshScheduled else { return }
+        gridRefreshScheduled = true
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.gridRefreshScheduled = false
+            self.clampCurrentPageWithinBounds()
+            self.gridRefreshTrigger = UUID()
+        }
     }
     
     

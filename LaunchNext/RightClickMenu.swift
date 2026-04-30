@@ -275,3 +275,98 @@ extension CAGridView {
     }
 
 }
+
+extension CAFolderGridView {
+    override func rightMouseDown(with event: NSEvent) {
+        guard let menu = folderContextMenu(for: event) else {
+            super.rightMouseDown(with: event)
+            return
+        }
+        NSMenu.popUpContextMenu(menu, with: event, for: self)
+    }
+
+    override func menu(for event: NSEvent) -> NSMenu? {
+        folderContextMenu(for: event)
+    }
+
+    private func folderContextMenu(for event: NSEvent) -> NSMenu? {
+        let location = convert(event.locationInWindow, from: nil)
+        guard let index = contextMenuItemIndex(at: location), apps.indices.contains(index) else {
+            contextMenuTargetApp = nil
+            return nil
+        }
+        let app = apps[index]
+        contextMenuTargetApp = app
+
+        let menu = NSMenu(title: "")
+        let showInFinderItem = NSMenuItem(
+            title: showInFinderMenuTitle,
+            action: #selector(handleFolderShowAppInFinderFromContextMenu(_:)),
+            keyEquivalent: ""
+        )
+        showInFinderItem.image = NSImage(systemSymbolName: "folder", accessibilityDescription: nil)
+        showInFinderItem.target = self
+        menu.addItem(showInFinderItem)
+
+        let copyPathItem = NSMenuItem(
+            title: copyAppPathMenuTitle,
+            action: #selector(handleFolderCopyAppPathFromContextMenu(_:)),
+            keyEquivalent: ""
+        )
+        copyPathItem.image = NSImage(systemSymbolName: "doc.on.doc", accessibilityDescription: nil)
+        copyPathItem.target = self
+        menu.addItem(copyPathItem)
+
+        menu.addItem(NSMenuItem.separator())
+
+        let hideItem = NSMenuItem(
+            title: hideAppMenuTitle,
+            action: #selector(handleFolderHideAppFromContextMenu(_:)),
+            keyEquivalent: ""
+        )
+        hideItem.image = NSImage(systemSymbolName: "eye.slash", accessibilityDescription: nil)
+        hideItem.target = self
+        menu.addItem(hideItem)
+
+        if canUseConfiguredUninstallTool {
+            menu.addItem(NSMenuItem.separator())
+            let uninstallItem = NSMenuItem(
+                title: uninstallWithToolMenuTitle,
+                action: #selector(handleFolderUninstallWithToolFromContextMenu(_:)),
+                keyEquivalent: ""
+            )
+            uninstallItem.attributedTitle = NSAttributedString(
+                string: uninstallWithToolMenuTitle,
+                attributes: [.foregroundColor: NSColor.systemRed]
+            )
+            uninstallItem.image = redMenuSymbolImage(named: "trash")
+            uninstallItem.target = self
+            menu.addItem(uninstallItem)
+        }
+        return menu
+    }
+
+    @objc private func handleFolderShowAppInFinderFromContextMenu(_ sender: NSMenuItem) {
+        guard let app = contextMenuTargetApp else { return }
+        onShowAppInFinder?(app)
+        contextMenuTargetApp = nil
+    }
+
+    @objc private func handleFolderCopyAppPathFromContextMenu(_ sender: NSMenuItem) {
+        guard let app = contextMenuTargetApp else { return }
+        onCopyAppPath?(app)
+        contextMenuTargetApp = nil
+    }
+
+    @objc private func handleFolderHideAppFromContextMenu(_ sender: NSMenuItem) {
+        guard let app = contextMenuTargetApp else { return }
+        onHideApp?(app)
+        contextMenuTargetApp = nil
+    }
+
+    @objc private func handleFolderUninstallWithToolFromContextMenu(_ sender: NSMenuItem) {
+        guard let app = contextMenuTargetApp else { return }
+        onUninstallWithTool?(app)
+        contextMenuTargetApp = nil
+    }
+}
