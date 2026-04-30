@@ -22,7 +22,7 @@ MacOS Tahoe removed launchpad,and it's so hard to use, it's doesn't use your Bio
 
 *LaunchNow has chosen the GPL 3 license. LaunchNext follows the same licensing terms.*
 
-### Install with Homebrew
+### Install with Homebrew 🍺
 
 ```bash
 brew tap RoversX/homebrew-tap
