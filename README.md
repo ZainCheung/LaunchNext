@@ -44,10 +44,12 @@ sudo xattr -r -d com.apple.quarantine /Applications/LaunchNext.app
 - ✅ **Hide icon labels** - clean, minimalist view when you don't need app names
 - ✅ **Custom icon sizes** - adjust icon dimensions to fit your preferences
 - ✅ **Smart folder management** - create and organize folders just like before
-- ✅ **Instant search and keyboard navigation** - find apps quickly
+- ✅ **Fuzzy search and keyboard navigation** - find apps quickly, even with partial or imperfect input
 - ✅ **CLI / TUI support** - inspect and operate your layout from the terminal
-- ✅ **Hot Corner and native gesture support** - more ways to open LaunchNext quickly
+- ✅ **Hot Corner and native gesture support** - open LaunchNext with corners, trackpad gestures, and 4 / 5 finger options
 - ✅ **Drag apps directly to the Dock** - available in Next Engine + Core Animation
+- ✅ **Core Animation folders** - folder content supports paged and vertical scroll layouts
+- ✅ **Better context menus** - Show in Finder, Copy App Path, Rename Folder, and configured uninstall actions
 - ✅ **Update tab with Markdown release notes** - richer in-app update experience
 - ✅ **Backup, controller, and voice support improvements** - better reliability and accessibility
 
@@ -128,8 +130,15 @@ xcodebuild -project LaunchNext.xcodeproj -scheme LaunchNext -configuration Relea
 - **Fullscreen**: Full-screen mode for maximum visibility
 - **Legacy Engine** and **Next Engine + Core Animation** are available in Settings
 - LaunchNext can keep separate settings for fullscreen and compact
+- Optional fullscreen menu bar hiding is available; macOS also hides the Dock when this is enabled
 
 ## Advanced Features
+
+### Search and Folder Experience
+- **Fuzzy Search**: Match apps with partial names, abbreviations, and imperfect input
+- **Configurable Search Delay**: Tune search debounce timing in Settings
+- **Folder Layout Modes**: Choose between Launchpad-like paged folders and vertical scrolling folders
+- **Core Animation Folder Rendering**: Smoother folder interaction for larger folders
 
 ### Smart Background Interaction
 - Intelligent click detection prevents accidental dismissal
@@ -144,8 +153,11 @@ xcodebuild -project LaunchNext.xcodeproj -scheme LaunchNext -configuration Relea
 ### Automation and Activation
 - **CLI / TUI**: Manage LaunchNext from the terminal
 - **Hot Corner**: Open LaunchNext from a configurable screen corner
-- **Experimental native gestures**: Four-finger pinch / tap actions
+- **Experimental native gestures**: 4 / 5 finger pinch and tap actions, including external trackpad device selection
 - **Dock drag**: Drag apps directly into the macOS Dock in Next Engine + Core Animation
+
+### App Management
+- **Context menu actions**: Show apps in Finder, copy app paths, rename folders, and use a configured uninstall tool
 
 ### Update and Backup Tools
 - **Update tab**: Check for updates and read Markdown release notes inside Settings
