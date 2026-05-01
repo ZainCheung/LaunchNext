@@ -80,6 +80,7 @@ struct SettingsView: View {
     @State private var showCLIInfoPopover = false
     @State private var showCLIRemoveInfoPopover = false
     @State private var showCLIFullPathCommand = false
+    @State private var showHideMenuBarInfoPopover = false
     @State private var copiedCLICommand: String? = nil
     @State private var cliCommandActionMessage: String? = nil
     @State private var layoutModePreviewScope: LayoutModePreviewScope = .fullscreen
@@ -4679,6 +4680,32 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
             }
 
             HStack {
+                Text(appStore.localized(.hideMenuBarOption))
+                Button {
+                    showHideMenuBarInfoPopover.toggle()
+                } label: {
+                    Image(systemName: "info.circle")
+                        .font(.caption.weight(.regular))
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .popover(isPresented: $showHideMenuBarInfoPopover, arrowEdge: .top) {
+                    Text(appStore.localized(.hideMenuBarInfoBody))
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(12)
+                        .frame(width: 280, alignment: .leading)
+                }
+                Spacer()
+                Toggle("", isOn: $appStore.hideMenuBar)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+            }
+            .disabled(!appStore.isFullscreenMode)
+            .opacity(appStore.isFullscreenMode ? 1 : 0.45)
+
+            HStack {
                 Text(appStore.localized(.rememberPageTitle))
                 Spacer()
                 Toggle("", isOn: $appStore.rememberLastPage)
@@ -5437,6 +5464,7 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
                     keys.insert("isFullscreenMode")
                     keys.insert("showLabels")
                     keys.insert("hideDock")
+                    keys.insert(AppStore.hideMenuBarKey)
                     keys.insert("enableAnimations")
                     keys.insert(AppStore.windowOpenAnimationKey)
                     keys.insert("useLocalizedThirdPartyTitles")

@@ -351,6 +351,7 @@ final class AppStore: ObservableObject {
     static let activePressScaleKey = "activePressScale"
     static let followScrollPagingKey = "followScrollPagingEnabled"
     static let reverseWheelPagingKey = "reverseWheelPagingDirection"
+    static let hideMenuBarKey = "hideMenuBar"
     static let useCAGridRendererKey = "useCAGridRenderer"
     static let folderLayoutModeKey = "folderLayoutMode"
     static let windowOpenAnimationKey = "windowOpenAnimationEnabled"
@@ -706,6 +707,7 @@ final class AppStore: ObservableObject {
         defaults.set(true, forKey: Self.folderPreviewHighResKey)
         defaults.set(FolderLayoutMode.paged.rawValue, forKey: Self.folderLayoutModeKey)
         defaults.set(false, forKey: "hideDock")
+        defaults.set(false, forKey: Self.hideMenuBarKey)
         defaults.set(0.8, forKey: "scrollSensitivity")
         defaults.set(Self.defaultGridColumnsPerPage, forKey: Self.gridColumnsKey)
         defaults.set(Self.defaultGridRowsPerPage, forKey: Self.gridRowsKey)
@@ -766,6 +768,7 @@ final class AppStore: ObservableObject {
         enableHighResFolderPreviews = defaults.object(forKey: Self.folderPreviewHighResKey) as? Bool ?? true
         folderLayoutMode = Self.loadFolderLayoutMode(from: defaults, isExistingInstall: nil)
         hideDock = defaults.object(forKey: "hideDock") as? Bool ?? false
+        hideMenuBar = defaults.object(forKey: Self.hideMenuBarKey) as? Bool ?? false
         scrollSensitivity = defaults.object(forKey: "scrollSensitivity") as? Double ?? 0.8
         gridColumnsPerPage = Self.clampColumns(defaults.object(forKey: Self.gridColumnsKey) as? Int ?? Self.defaultGridColumnsPerPage)
         gridRowsPerPage = Self.clampRows(defaults.object(forKey: Self.gridRowsKey) as? Int ?? Self.defaultGridRowsPerPage)
@@ -1268,6 +1271,16 @@ final class AppStore: ObservableObject {
         didSet {
             guard hideDock != oldValue else { return }
             UserDefaults.standard.set(hideDock, forKey: "hideDock")
+        }
+    }
+
+    @Published var hideMenuBar: Bool = {
+        if UserDefaults.standard.object(forKey: AppStore.hideMenuBarKey) == nil { return false }
+        return UserDefaults.standard.bool(forKey: AppStore.hideMenuBarKey)
+    }() {
+        didSet {
+            guard hideMenuBar != oldValue else { return }
+            UserDefaults.standard.set(hideMenuBar, forKey: Self.hideMenuBarKey)
         }
     }
     
@@ -2551,6 +2564,9 @@ final class AppStore: ObservableObject {
         if defaults.object(forKey: Self.hotCornerToggleWhenOpenKey) == nil {
             defaults.set(false, forKey: Self.hotCornerToggleWhenOpenKey)
         }
+        if defaults.object(forKey: Self.hideMenuBarKey) == nil {
+            defaults.set(false, forKey: Self.hideMenuBarKey)
+        }
         if defaults.object(forKey: Self.gestureEnabledKey) == nil {
             defaults.set(false, forKey: Self.gestureEnabledKey)
         }
@@ -2640,6 +2656,7 @@ final class AppStore: ObservableObject {
         self.hotCornerTriggerDelay = clampedHotCornerDelay
         self.hotCornerHitboxSize = clampedHotCornerHitboxSize
         self.hotCornerToggleWhenOpen = defaults.object(forKey: Self.hotCornerToggleWhenOpenKey) as? Bool ?? false
+        self.hideMenuBar = defaults.object(forKey: Self.hideMenuBarKey) as? Bool ?? false
         self.gestureEnabled = defaults.object(forKey: Self.gestureEnabledKey) as? Bool ?? false
         self.gestureCloseOnPinchOut = defaults.object(forKey: Self.gestureCloseOnPinchOutKey) as? Bool ?? false
         self.gestureTapAction = GestureTapAction(rawValue: defaults.string(forKey: Self.gestureTapActionKey) ?? "") ?? .off
@@ -4318,6 +4335,7 @@ final class AppStore: ObservableObject {
             Self.folderPreviewHighResKey,
             Self.folderLayoutModeKey,
             "hideDock",
+            Self.hideMenuBarKey,
             "scrollSensitivity",
             Self.gridColumnsKey,
             Self.gridRowsKey,

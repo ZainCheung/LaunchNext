@@ -1441,10 +1441,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSGestureR
     }
 
     private func bindSystemUIVisibility() {
-        appStore.$hideDock
-            .removeDuplicates()
+        Publishers.CombineLatest3(
+            appStore.$hideDock.removeDuplicates(),
+            appStore.$hideMenuBar.removeDuplicates(),
+            appStore.$isFullscreenMode.removeDuplicates()
+        )
             .receive(on: RunLoop.main)
-            .sink { [weak self] _ in
+            .sink { [weak self] _, _, _ in
                 self?.updateSystemUIVisibility()
             }
             .store(in: &cancellables)
@@ -1452,9 +1455,28 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSGestureR
 
     func updateSystemUIVisibility() {
         let shouldHideDock = appStore.hideDock && windowIsVisible
-        let options: NSApplication.PresentationOptions = shouldHideDock ? [.autoHideDock] : []
+        let shouldHideMenuBar = appStore.hideMenuBar && appStore.isFullscreenMode && windowIsVisible
+        var options: NSApplication.PresentationOptions = []
+        if shouldHideMenuBar {
+            options.insert(.hideDock)
+            options.insert(.hideMenuBar)
+        } else if shouldHideDock {
+            options.insert(.autoHideDock)
+        }
         if options != NSApp.presentationOptions {
             NSApp.presentationOptions = options
+        }
+        updateWindowLevelForSystemUI()
+    }
+
+    private func updateWindowLevelForSystemUI() {
+        guard let window else { return }
+        let shouldCoverMenuBar = appStore.hideMenuBar && appStore.isFullscreenMode && windowIsVisible
+        let targetLevel: NSWindow.Level = shouldCoverMenuBar
+            ? NSWindow.Level(rawValue: NSWindow.Level.mainMenu.rawValue + 1)
+            : .floating
+        if window.level != targetLevel {
+            window.level = targetLevel
         }
     }
 
