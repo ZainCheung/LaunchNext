@@ -499,6 +499,8 @@ final class AppStore: ObservableObject {
     private static let defaultAnimationDuration: Double = 0.3
     private static let lastUpdateCheckKey = "lastUpdateCheckTimestamp"
     private static let automaticUpdateInterval: TimeInterval = 60 * 60 * 24
+    private static let automaticUpdateRetryCount = 3
+    private static let automaticUpdateRetryDelay: TimeInterval = 10
     private static let defaultLaunchpadOpenSound = "Submarine"
     private static let defaultLaunchpadCloseSound = "Glass"
     private static let defaultNavigationSound = "Tink"
@@ -1544,6 +1546,8 @@ final class AppStore: ObservableObject {
             } else {
                 autoCheckTimer?.cancel()
                 autoCheckTimer = nil
+                autoCheckWorkItem?.cancel()
+                autoCheckWorkItem = nil
             }
         }
     }
@@ -6493,10 +6497,17 @@ final class AppStore: ObservableObject {
         if let last = lastUpdateCheck, now.timeIntervalSince(last) < Self.automaticUpdateInterval {
             return
         }
-        checkForUpdates()
+        checkForUpdates(automaticRetriesRemaining: Self.automaticUpdateRetryCount)
     }
 
     func checkForUpdates() {
+        checkForUpdates(automaticRetriesRemaining: nil)
+    }
+
+    private func checkForUpdates(automaticRetriesRemaining: Int?) {
+        if automaticRetriesRemaining != nil {
+            guard autoCheckForUpdates else { return }
+        }
         guard updateState != .checking else { return }
 
         lastUpdateCheck = Date()
@@ -6522,15 +6533,16 @@ final class AppStore: ObservableObject {
                             updateState = .upToDate(latest: latestRelease.tagName)
                         }
                     } else {
-                        updateState = .failed(localized(.versionParseError))
-                        presentUpdateFailureAlert(localized(.versionParseError))
+                        handleUpdateCheckFailure(
+                            localized(.versionParseError),
+                            automaticRetriesRemaining: automaticRetriesRemaining
+                        )
                     }
                 }
             } catch {
                 await MainActor.run {
                     let message = error.localizedDescription
-                    updateState = .failed(message)
-                    presentUpdateFailureAlert(message)
+                    handleUpdateCheckFailure(message, automaticRetriesRemaining: automaticRetriesRemaining)
                 }
             }
         }
@@ -6553,6 +6565,25 @@ final class AppStore: ObservableObject {
         }
 
         return try JSONDecoder().decode(GitHubRelease.self, from: data)
+    }
+
+    @MainActor
+    private func handleUpdateCheckFailure(_ message: String, automaticRetriesRemaining: Int?) {
+        guard let retriesRemaining = automaticRetriesRemaining,
+              retriesRemaining > 0,
+              autoCheckForUpdates else {
+            updateState = .failed(message)
+            presentUpdateFailureAlert(message)
+            return
+        }
+
+        updateState = .idle
+        autoCheckWorkItem?.cancel()
+        let retry = DispatchWorkItem { [weak self] in
+            self?.checkForUpdates(automaticRetriesRemaining: retriesRemaining - 1)
+        }
+        autoCheckWorkItem = retry
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.automaticUpdateRetryDelay, execute: retry)
     }
 
     @MainActor
