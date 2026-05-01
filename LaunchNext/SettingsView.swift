@@ -462,6 +462,18 @@ private var gestureTapActionBinding: Binding<AppStore.GestureTapAction> {
     )
 }
 
+private var gestureFingerCountBinding: Binding<AppStore.GestureFingerCount> {
+    Binding(
+        get: { appStore.gestureFingerCount },
+        set: { newValue in
+            guard appStore.gestureFingerCount != newValue else { return }
+            DispatchQueue.main.async {
+                appStore.gestureFingerCount = newValue
+            }
+        }
+    )
+}
+
 private var gestureDeviceSelectionModeBinding: Binding<GestureDeviceSelectionMode> {
     Binding(
         get: { appStore.gestureDeviceSelectionMode },
@@ -4048,6 +4060,22 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
                 }
 
                 VStack(alignment: .leading, spacing: 10) {
+                    HStack(alignment: .firstTextBaseline, spacing: 12) {
+                        Text(appStore.localized(.gestureFingerCountTitle))
+                        Spacer()
+                        Text(appStore.localized(appStore.gestureFingerCount.localizationKey))
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                    }
+
+                    HStack(spacing: 8) {
+                        ForEach(AppStore.GestureFingerCount.allCases) { count in
+                            gestureFingerCountButton(for: count)
+                        }
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 10) {
                     Text(appStore.localized(.gestureInputDeviceTitle))
                         .font(.headline)
 
@@ -4228,6 +4256,35 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
                 Image(systemName: gestureTapActionSymbol(for: action))
                     .font(.caption.weight(.semibold))
                 Text(appStore.localized(action.localizationKey))
+                    .font(.subheadline.weight(.semibold))
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 11)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(isSelected ? Color.accentColor.opacity(colorScheme == .dark ? 0.18 : 0.12)
+                                     : Color(nsColor: .windowBackgroundColor).opacity(colorScheme == .dark ? 0.25 : 0.75))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(isSelected ? Color.accentColor.opacity(0.65) : Color.primary.opacity(0.08), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func gestureFingerCountButton(for count: AppStore.GestureFingerCount) -> some View {
+        let isSelected = appStore.gestureFingerCount == count
+
+        return Button {
+            gestureFingerCountBinding.wrappedValue = count
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: count == .four ? "hand.raised" : "hand.raised.fill")
+                    .font(.caption.weight(.semibold))
+                Text(appStore.localized(count.localizationKey))
                     .font(.subheadline.weight(.semibold))
                     .lineLimit(1)
             }
@@ -5366,6 +5423,7 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
                     keys.insert(AppStore.gestureEnabledKey)
                     keys.insert(AppStore.gestureCloseOnPinchOutKey)
                     keys.insert(AppStore.gestureTapActionKey)
+                    keys.insert(AppStore.gestureFingerCountKey)
                     keys.insert(AppStore.gestureDeviceSelectionModeKey)
                     keys.insert(AppStore.gestureSelectedDeviceIDsKey)
                 }

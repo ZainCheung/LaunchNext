@@ -249,6 +249,27 @@ final class AppStore: ObservableObject {
         }
     }
 
+    enum GestureFingerCount: Int, CaseIterable, Codable, Identifiable {
+        case four = 4
+        case five = 5
+
+        var id: Int { rawValue }
+
+        var localizationKey: LocalizationKey {
+            switch self {
+            case .four: return .gestureFingerCountFour
+            case .five: return .gestureFingerCountFive
+            }
+        }
+
+        var minimumOpenParticipatingFingerCount: Int {
+            switch self {
+            case .four: return 3
+            case .five: return 4
+            }
+        }
+    }
+
     enum DevelopmentBackgroundOverride: String, CaseIterable, Identifiable {
         case none
         case solidWhite
@@ -350,6 +371,7 @@ final class AppStore: ObservableObject {
     static let gestureEnabledKey = "gestureEnabled"
     static let gestureCloseOnPinchOutKey = "gestureCloseOnPinchOut"
     static let gestureTapActionKey = "gestureTapAction"
+    static let gestureFingerCountKey = "gestureFingerCount"
     static let gestureDeviceSelectionModeKey = "gestureDeviceSelectionMode"
     static let gestureSelectedDeviceIDsKey = "gestureSelectedDeviceIDs"
     static let searchDebounceMillisecondsRange: ClosedRange<Double> = 100...600
@@ -807,6 +829,7 @@ final class AppStore: ObservableObject {
         gestureEnabled = UserDefaults.standard.object(forKey: Self.gestureEnabledKey) as? Bool ?? false
         gestureCloseOnPinchOut = UserDefaults.standard.object(forKey: Self.gestureCloseOnPinchOutKey) as? Bool ?? false
         gestureTapAction = GestureTapAction(rawValue: UserDefaults.standard.string(forKey: Self.gestureTapActionKey) ?? "") ?? .off
+        gestureFingerCount = GestureFingerCount(rawValue: UserDefaults.standard.integer(forKey: Self.gestureFingerCountKey)) ?? .four
         gestureDeviceSelectionMode = GestureDeviceSelectionMode(rawValue: UserDefaults.standard.string(forKey: Self.gestureDeviceSelectionModeKey) ?? "") ?? .automatic
         gestureSelectedDeviceIDs = Array(Set(UserDefaults.standard.stringArray(forKey: Self.gestureSelectedDeviceIDsKey) ?? [])).sorted()
 
@@ -1900,6 +1923,21 @@ final class AppStore: ObservableObject {
         }
     }
 
+    @Published var gestureFingerCount: GestureFingerCount = {
+        let defaults = UserDefaults.standard
+        guard let rawValue = defaults.object(forKey: AppStore.gestureFingerCountKey) as? Int,
+              let count = GestureFingerCount(rawValue: rawValue) else {
+            defaults.set(GestureFingerCount.four.rawValue, forKey: AppStore.gestureFingerCountKey)
+            return .four
+        }
+        return count
+    }() {
+        didSet {
+            guard gestureFingerCount != oldValue else { return }
+            UserDefaults.standard.set(gestureFingerCount.rawValue, forKey: Self.gestureFingerCountKey)
+        }
+    }
+
     @Published var gestureDeviceSelectionMode: GestureDeviceSelectionMode = {
         let defaults = UserDefaults.standard
         guard let rawValue = defaults.string(forKey: AppStore.gestureDeviceSelectionModeKey),
@@ -2527,6 +2565,9 @@ final class AppStore: ObservableObject {
             let migratedAction: GestureTapAction = legacyEnabled ? (legacyToggle ? .toggle : .open) : .off
             defaults.set(migratedAction.rawValue, forKey: Self.gestureTapActionKey)
         }
+        if defaults.object(forKey: Self.gestureFingerCountKey) == nil {
+            defaults.set(GestureFingerCount.four.rawValue, forKey: Self.gestureFingerCountKey)
+        }
         if defaults.object(forKey: Self.gestureDeviceSelectionModeKey) == nil {
             defaults.set(GestureDeviceSelectionMode.automatic.rawValue, forKey: Self.gestureDeviceSelectionModeKey)
         }
@@ -2602,6 +2643,7 @@ final class AppStore: ObservableObject {
         self.gestureEnabled = defaults.object(forKey: Self.gestureEnabledKey) as? Bool ?? false
         self.gestureCloseOnPinchOut = defaults.object(forKey: Self.gestureCloseOnPinchOutKey) as? Bool ?? false
         self.gestureTapAction = GestureTapAction(rawValue: defaults.string(forKey: Self.gestureTapActionKey) ?? "") ?? .off
+        self.gestureFingerCount = GestureFingerCount(rawValue: defaults.integer(forKey: Self.gestureFingerCountKey)) ?? .four
         self.gestureDeviceSelectionMode = GestureDeviceSelectionMode(rawValue: defaults.string(forKey: Self.gestureDeviceSelectionModeKey) ?? "") ?? .automatic
         self.gestureSelectedDeviceIDs = Array(Set(defaults.stringArray(forKey: Self.gestureSelectedDeviceIDsKey) ?? [])).sorted()
         self.enableAnimations = UserDefaults.standard.object(forKey: "enableAnimations") as? Bool ?? true

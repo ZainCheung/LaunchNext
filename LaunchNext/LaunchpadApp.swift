@@ -349,17 +349,22 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSGestureR
                 appStore.$gestureEnabled.removeDuplicates(),
                 appStore.$gestureCloseOnPinchOut.removeDuplicates(),
                 appStore.$gestureTapAction.removeDuplicates(),
-                appStore.$gestureDeviceSelectionMode.removeDuplicates()
+                appStore.$gestureFingerCount.removeDuplicates()
             ),
-            appStore.$gestureSelectedDeviceIDs.removeDuplicates()
+            Publishers.CombineLatest(
+                appStore.$gestureDeviceSelectionMode.removeDuplicates(),
+                appStore.$gestureSelectedDeviceIDs.removeDuplicates()
+            )
         )
         .receive(on: RunLoop.main)
-        .sink { [weak self] combined, selectedDeviceIDs in
-            let (enabled, closeOnPinchOut, tapAction, deviceSelectionMode) = combined
+        .sink { [weak self] combined, deviceSelection in
+            let (enabled, closeOnPinchOut, tapAction, fingerCount) = combined
+            let (deviceSelectionMode, selectedDeviceIDs) = deviceSelection
             self?.updateGestureMonitor(
                 enabled: enabled,
                 closeOnPinchOut: closeOnPinchOut,
                 tapAction: tapAction,
+                fingerCount: fingerCount,
                 deviceSelectionMode: deviceSelectionMode,
                 selectedDeviceIDs: selectedDeviceIDs
             )
@@ -460,6 +465,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSGestureR
     private func updateGestureMonitor(enabled: Bool,
                                       closeOnPinchOut: Bool,
                                       tapAction: AppStore.GestureTapAction,
+                                      fingerCount: AppStore.GestureFingerCount,
                                       deviceSelectionMode: GestureDeviceSelectionMode,
                                       selectedDeviceIDs: [String]) {
         let configuration = GestureMonitor.Configuration(
@@ -468,7 +474,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSGestureR
             tapEnabled: tapAction != .off,
             tapTogglesWindow: tapAction == .toggle,
             deviceSelectionMode: deviceSelectionMode,
-            selectedDeviceIDs: selectedDeviceIDs
+            selectedDeviceIDs: selectedDeviceIDs,
+            requiredFingerCount: fingerCount.rawValue,
+            minimumOpenParticipatingFingerCount: fingerCount.minimumOpenParticipatingFingerCount
         )
 
         if gestureMonitor == nil {
