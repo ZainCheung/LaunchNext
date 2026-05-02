@@ -333,7 +333,7 @@ final class CAFolderGridView: NSView {
         textLayer.isWrapped = false
         textLayer.fontSize = labelFontSize
         textLayer.font = NSFont.systemFont(ofSize: labelFontSize, weight: labelFontWeight)
-        textLayer.foregroundColor = NSColor.labelColor.cgColor
+        textLayer.foregroundColor = currentLabelColor().cgColor
         textLayer.string = app.name
         textLayer.shouldRasterize = true
         textLayer.rasterizationScale = backingScale
@@ -556,13 +556,26 @@ final class CAFolderGridView: NSView {
         }
     }
 
-    override func viewDidChangeEffectiveAppearance() {
-        super.viewDidChangeEffectiveAppearance()
+    private func updateLabelColors() {
+        let resolvedColor = currentLabelColor().cgColor
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
         for layer in appLayers {
             if let text = layer.sublayers?.first(where: { $0.name == "label" }) as? CATextLayer {
-                text.foregroundColor = NSColor.labelColor.cgColor
+                text.foregroundColor = resolvedColor
             }
         }
+        CATransaction.commit()
+    }
+
+    private func currentLabelColor() -> NSColor {
+        let match = effectiveAppearance.bestMatch(from: [.darkAqua, .aqua])
+        return match == .darkAqua ? .white : .black
+    }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        updateLabelColors()
     }
 
     override func mouseMoved(with event: NSEvent) {
