@@ -6684,7 +6684,7 @@ final class AppStore: ObservableObject {
             .appendingPathComponent("LaunchNext")
             .appendingPathComponent("updates", isDirectory: true)
         let configURL = baseDirectory.appendingPathComponent("config.json", isDirectory: false)
-        let supportedLanguages = ["de", "en", "es", "fr", "it", "hi", "ja", "ko", "ru", "vi", "zh"]
+        let supportedLanguages = ["de", "en", "es", "fr", "it", "hi", "ja", "ko", "ru", "vi", "zh", "zh-Hant"]
         let defaultConfig: [String: Any] = [
             "language": "en",
             "supported_languages": supportedLanguages

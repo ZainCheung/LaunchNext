@@ -24,7 +24,7 @@ DOWNLOADS_SUBDIR = "downloads"
 
 STRINGS = {
     "en": {
-        "language_prompt": "Select language:\n  1) English\n  2) 简体中文\n  3) 日本語\n  4) 한국어\n  5) Français\n  6) Español\n  7) Deutsch\n  8) Русский\n  9) हिन्दी\n 10) Tiếng Việt\nEnter choice [1]: ",
+        "language_prompt": "Select language:\n  1) English\n  2) 简体中文\n  3) 日本語\n  4) 한국어\n  5) Français\n  6) Español\n  7) Deutsch\n  8) Русский\n  9) हिन्दी\n 10) Tiếng Việt\n 11) 繁體中文\nEnter choice [1]: ",
         "language_saved": "Language preference saved.",
         "fetching": "Fetching release metadata from {url}",
         "latest_tag": "Latest release tag: {tag}",
@@ -58,7 +58,7 @@ STRINGS = {
         "press_enter": "Press Enter to close this window...",
     },
     "zh": {
-        "language_prompt": "选择语言：\n  1) English\n  2) 简体中文\n  3) 日本語\n  4) 한국어\n  5) Français\n  6) Español\n  7) Deutsch\n  8) Русский\n  9) हिन्दी\n 10) Tiếng Việt\n请输入序号 [1]：",
+        "language_prompt": "选择语言：\n  1) English\n  2) 简体中文\n  3) 日本語\n  4) 한국어\n  5) Français\n  6) Español\n  7) Deutsch\n  8) Русский\n  9) हिन्दी\n 10) Tiếng Việt\n 11) 繁體中文\n请输入序号 [1]：",
         "language_saved": "语言偏好已保存。",
         "fetching": "正在获取发布信息：{url}",
         "latest_tag": "最新版本标签：{tag}",
@@ -91,8 +91,42 @@ STRINGS = {
         "prompt_language_change": "更改语言（当前：{lang}）？[y/N]：",
         "press_enter": "按回车键关闭此窗口…",
     },
+    "zh-Hant": {
+        "language_prompt": "選擇語言：\n  1) English\n  2) 簡體中文\n  3) 日本語\n  4) 한국어\n  5) Français\n  6) Español\n  7) Deutsch\n  8) Русский\n  9) हिन्दी\n 10) Tiếng Việt\n 11) 繁體中文\n請輸入序號 [1]：",
+        "language_saved": "語言偏好已儲存。",
+        "fetching": "正在取得發佈資訊：{url}",
+        "latest_tag": "最新版本標籤：{tag}",
+        "asset_selected": "已選擇資源：{name}（{size} 位元組）",
+        "no_asset": "沒有資源匹配正則：{pattern}",
+        "no_asset_auto": "沒有資源匹配正則 {pattern}。可用資源：{assets}",
+        "no_assets_available": "該發佈沒有任何可下載資源。",
+        "asset_fallback": "沒有資源匹配正則 {pattern}，請選擇下列資源：",
+        "prompt_asset_choice": "請選擇資源 [1-{count}]（預設 1）：",
+        "downloading": "正在下載資源…",
+        "download_complete": "已下載到 {path}（{size} 位元組）",
+        "extracting": "正在解壓…",
+        "found_bundle": "找到 App：{path}",
+        "remove_quarantine_ok": "已移除隔離屬性",
+        "remove_quarantine_warn": "警告：移除隔離屬性失敗",
+        "download_only_path": "僅下載模式：App 位於 {path}",
+        "install_prepare": "準備安裝到 {path}",
+        "requires_admin": "需要管理員權限，請依照提示輸入密碼。",
+        "install_complete": "安裝完成",
+        "relaunch_warn": "警告：自動重新開啟 LaunchNext 失敗",
+        "release_notes": "更新說明：{url}",
+        "update_complete": "更新完成：{tag}",
+        "update_elapsed": "本次更新耗時 {seconds} 秒",
+        "cancelled": "使用者已取消更新。",
+        "prompt_continue": "即將安裝至 {path}，是否繼續？[Y/n]：",
+        "prompt_download_only": "是否僅下載而不安裝？[y/N]：",
+        "invalid_choice": "輸入無效。",
+        "download_only_selected": "已選擇僅下載模式。",
+        "download_and_install": "已選擇下載並安裝。",
+        "prompt_language_change": "更改語言（目前：{lang}）？[y/N]：",
+        "press_enter": "按 Enter 鍵關閉此視窗…",
+    },
     "ja": {
-        "language_prompt": "言語を選択してください:\n  1) English\n  2) 简体中文\n  3) 日本語\n  4) 한국어\n  5) Français\n  6) Español\n  7) Deutsch\n  8) Русский\n  9) हिन्दी\n 10) Tiếng Việt\n選択 [1]: ",
+        "language_prompt": "言語を選択してください:\n  1) English\n  2) 简体中文\n  3) 日本語\n  4) 한국어\n  5) Français\n  6) Español\n  7) Deutsch\n  8) Русский\n  9) हिन्दी\n 10) Tiếng Việt\n 11) 繁體中文\n選択 [1]: ",
         "language_saved": "言語設定を保存しました。",
         "fetching": "GitHub からリリース情報を取得中: {url}",
         "latest_tag": "最新リリースタグ: {tag}",
@@ -126,7 +160,7 @@ STRINGS = {
         "press_enter": "閉じるには Enter キーを押してください…",
     },
     "ko": {
-        "language_prompt": "언어를 선택하세요:\n  1) English\n  2) 简体中文\n  3) 日本語\n  4) 한국어\n  5) Français\n  6) Español\n  7) Deutsch\n  8) Русский\n  9) हिन्दी\n 10) Tiếng Việt\n선택 [1]: ",
+        "language_prompt": "언어를 선택하세요:\n  1) English\n  2) 简体中文\n  3) 日本語\n  4) 한국어\n  5) Français\n  6) Español\n  7) Deutsch\n  8) Русский\n  9) हिन्दी\n 10) Tiếng Việt\n 11) 繁體中文\n선택 [1]: ",
         "language_saved": "언어 설정이 저장되었습니다.",
         "fetching": "릴리스 정보를 가져오는 중: {url}",
         "latest_tag": "최신 릴리스 태그: {tag}",
@@ -160,7 +194,7 @@ STRINGS = {
         "press_enter": "창을 닫으려면 Enter 키를 누르세요…",
     },
     "fr": {
-        "language_prompt": "Sélectionnez la langue :\n  1) English\n  2) 简体中文\n  3) 日本語\n  4) 한국어\n  5) Français\n  6) Español\n  7) Deutsch\n  8) Русский\n  9) हिन्दी\n 10) Tiếng Việt\nEntrez votre choix [1] : ",
+        "language_prompt": "Sélectionnez la langue :\n  1) English\n  2) 简体中文\n  3) 日本語\n  4) 한국어\n  5) Français\n  6) Español\n  7) Deutsch\n  8) Русский\n  9) हिन्दी\n 10) Tiếng Việt\n 11) 繁體中文\nEntrez votre choix [1] : ",
         "language_saved": "Préférence linguistique enregistrée.",
         "fetching": "Récupération des métadonnées de la version depuis {url}",
         "latest_tag": "Dernier tag de version : {tag}",
@@ -194,7 +228,7 @@ STRINGS = {
         "press_enter": "Appuyez sur Entrée pour fermer cette fenêtre…",
     },
     "es": {
-        "language_prompt": "Seleccione el idioma:\n  1) English\n  2) 简体中文\n  3) 日本語\n  4) 한국어\n  5) Français\n  6) Español\n  7) Deutsch\n  8) Русский\n  9) हिन्दी\n 10) Tiếng Việt\nOpción [1]: ",
+        "language_prompt": "Seleccione el idioma:\n  1) English\n  2) 简体中文\n  3) 日本語\n  4) 한국어\n  5) Français\n  6) Español\n  7) Deutsch\n  8) Русский\n  9) हिन्दी\n 10) Tiếng Việt\n 11) 繁體中文\nOpción [1]: ",
         "language_saved": "Preferencia de idioma guardada.",
         "fetching": "Obteniendo metadatos de la versión desde {url}",
         "latest_tag": "Etiqueta de la última versión: {tag}",
@@ -228,7 +262,7 @@ STRINGS = {
         "press_enter": "Pulse Intro para cerrar esta ventana…",
     },
     "de": {
-        "language_prompt": "Sprache auswählen:\n  1) English\n  2) 简体中文\n  3) 日本語\n  4) 한국어\n  5) Français\n  6) Español\n  7) Deutsch\n  8) Русский\n  9) हिन्दी\n 10) Tiếng Việt\nAuswahl [1]: ",
+        "language_prompt": "Sprache auswählen:\n  1) English\n  2) 简体中文\n  3) 日本語\n  4) 한국어\n  5) Français\n  6) Español\n  7) Deutsch\n  8) Русский\n  9) हिन्दी\n 10) Tiếng Việt\n 11) 繁體中文\nAuswahl [1]: ",
         "language_saved": "Spracheinstellung gespeichert.",
         "fetching": "Versionsinformationen werden von {url} abgerufen",
         "latest_tag": "Neueste Versionskennung: {tag}",
@@ -262,7 +296,7 @@ STRINGS = {
         "press_enter": "Zum Schließen dieses Fensters die Eingabetaste drücken…",
     },
     "ru": {
-        "language_prompt": "Выберите язык:\n  1) English\n  2) 简体中文\n  3) 日本語\n  4) 한국어\n  5) Français\n  6) Español\n  7) Deutsch\n  8) Русский\n  9) हिन्दी\n 10) Tiếng Việt\nВведите номер [1]: ",
+        "language_prompt": "Выберите язык:\n  1) English\n  2) 简体中文\n  3) 日本語\n  4) 한국어\n  5) Français\n  6) Español\n  7) Deutsch\n  8) Русский\n  9) हिन्दी\n 10) Tiếng Việt\n 11) 繁體中文\nВведите номер [1]: ",
         "language_saved": "Языковые настройки сохранены.",
         "fetching": "Получение сведений о релизе по адресу {url}",
         "latest_tag": "Текущий тег релиза: {tag}",
@@ -296,7 +330,7 @@ STRINGS = {
         "press_enter": "Нажмите Enter, чтобы закрыть это окно…",
     },
     "hi": {
-        "language_prompt": "भाषा चुनें:\n  1) English\n  2) 简体中文\n  3) 日本語\n  4) 한국어\n  5) Français\n  6) Español\n  7) Deutsch\n  8) Русский\n  9) हिन्दी\n 10) Tiếng Việt\nचयन करें [1]: ",
+        "language_prompt": "भाषा चुनें:\n  1) English\n  2) 简体中文\n  3) 日本語\n  4) 한국어\n  5) Français\n  6) Español\n  7) Deutsch\n  8) Русский\n  9) हिन्दी\n 10) Tiếng Việt\n 11) 繁體中文\nचयन करें [1]: ",
         "language_saved": "भाषा वरीयता सहेजी गई।",
         "fetching": "{url} से रिलीज़ मेटाडाटा प्राप्त किया जा रहा है",
         "latest_tag": "नवीनतम रिलीज़ टैग: {tag}",
@@ -330,7 +364,7 @@ STRINGS = {
         "press_enter": "इस विंडो को बंद करने के लिए Enter दबाएँ…",
     },
     "vi": {
-        "language_prompt": "Chọn ngôn ngữ:\n  1) English\n  2) 简体中文\n  3) 日本語\n  4) 한국어\n  5) Français\n  6) Español\n  7) Deutsch\n  8) Русский\n  9) हिन्दी\n 10) Tiếng Việt\nNhập lựa chọn [1]: ",
+        "language_prompt": "Chọn ngôn ngữ:\n  1) English\n  2) 简体中文\n  3) 日本語\n  4) 한국어\n  5) Français\n  6) Español\n  7) Deutsch\n  8) Русский\n  9) हिन्दी\n 10) Tiếng Việt\n 11) 繁體中文\nNhập lựa chọn [1]: ",
         "language_saved": "Đã lưu tùy chọn ngôn ngữ.",
         "fetching": "Đang lấy thông tin phát hành từ {url}",
         "latest_tag": "Tag phát hành mới nhất: {tag}",
@@ -376,6 +410,7 @@ LANG_CODES = {
     "8": "ru",
     "9": "hi",
     "10": "vi",
+    "11": "zh-Hant",
 }
 ALLOWED_LANG_CODES = set(LANG_CODES.values())
 LANG_MENU_ORDER = [LANG_CODES[key] for key in sorted(LANG_CODES, key=lambda x: int(x))]
@@ -391,6 +426,7 @@ LANG_DISPLAY_NAMES = {
     "ru": "Русский",
     "hi": "हिन्दी",
     "vi": "Tiếng Việt",
+    "zh-Hant": "繁體中文",
 }
 LANGUAGE_HINTS = {
     "en": "Use ↑/↓ to choose, Enter to confirm, Q to cancel",
@@ -403,6 +439,7 @@ LANGUAGE_HINTS = {
     "ru": "↑/↓ — выбор, Enter — подтвердить, Q — отменить",
     "hi": "↑/↓ से चुनें, Enter से पुष्टि करें, Q से रद्द करें",
     "vi": "Dùng ↑/↓ chọn, Enter xác nhận, Q huỷ",
+    "zh-Hant": "使用 ↑/↓ 選擇，Enter 確認，Q 取消",
 }
 YES_NO_LABELS = {
     "zh": ("是", "否"),
@@ -414,6 +451,7 @@ YES_NO_LABELS = {
     "ru": ("Да", "Нет"),
     "hi": ("हाँ", "नहीं"),
     "vi": ("Có", "Không"),
+    "zh-Hant": ("是", "否"),
 }
 YES_NO_HINTS = {
     "en": "Use ←/→ to choose, Enter to confirm",
@@ -426,6 +464,7 @@ YES_NO_HINTS = {
     "ru": "←/→ для выбора, Enter — подтвердить",
     "hi": "←→ से चुनें, Enter से पुष्टि करें",
     "vi": "Dùng ←→ chọn, Enter xác nhận",
+    "zh-Hant": "使用 ←/→ 切換，Enter 確認",
 }
 DEFAULT_LANG = "en"
 
