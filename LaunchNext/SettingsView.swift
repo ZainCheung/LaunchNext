@@ -6332,6 +6332,7 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
                 .frame(minWidth: minWidth)
+                .contentShape(Capsule())
         }
         .buttonStyle(.plain)
         .background(
